@@ -222,7 +222,7 @@ public abstract class NonBlockingSocketChannel {
 					if (logger.isDebugEnabled()) {
 						logger.debug("handleWritable NOTIFY client=" + client);
 					}
-					lock.notify();
+					lock.notifyAll();
 				}
 			});
 		}
@@ -360,10 +360,12 @@ public abstract class NonBlockingSocketChannel {
 			// Start the read thread before connect
 			// No/null accept handler for clients
 			start(null, (c) -> {
-				if (connectHandler != null) {
-					connectHandler.apply(c);
+				synchronized (lock) {
+					if (connectHandler != null) {
+						connectHandler.apply(c);
+					}
+					lock.notifyAll();
 				}
-				lock.notify();
 			}, readHandler);
 
 			client.connect(address);
