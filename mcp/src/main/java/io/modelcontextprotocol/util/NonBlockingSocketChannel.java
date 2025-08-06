@@ -281,17 +281,25 @@ public abstract class NonBlockingSocketChannel {
 		}
 	}
 
-	protected void hardCloseClient(SocketChannel client, IOConsumer<SocketChannel> closeHandler) throws IOException {
+	protected void hardCloseClient(SocketChannel client, IOConsumer<SocketChannel> closeHandler) {
 		if (client != null) {
 			Object lock = client.blockingLock();
 			if (logger.isDebugEnabled()) {
 				logger.debug("hardCloseClient client=" + client);
 			}
 			synchronized (lock) {
-				if (closeHandler != null) {
-					closeHandler.apply(client);
+				try {
+					if (closeHandler != null) {
+						closeHandler.apply(client);
+					}
+					client.close();
+					client = null;
 				}
-				client.close();
+				catch (IOException e) {
+					if (logger.isDebugEnabled()) {
+						logger.debug("hardClose client socketchannel.close exception", e);
+					}
+				}
 			}
 			executorShutdown();
 		}

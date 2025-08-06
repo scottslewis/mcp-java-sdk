@@ -44,23 +44,33 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 
 	private UDSMcpSessionTransport transport;
 
-	public UDSServerTransportProvider(ObjectMapper objectMapper, UnixDomainSocketAddress unixSocketAddress)
-			throws IOException {
+	public UDSServerTransportProvider(UnixDomainSocketAddress unixSocketAddress) {
+		this(new ObjectMapper(), unixSocketAddress);
+	}
+
+	public UDSServerTransportProvider(ObjectMapper objectMapper, UnixDomainSocketAddress unixSocketAddress) {
 		Assert.notNull(objectMapper, "The ObjectMapper can not be null");
 		this.objectMapper = objectMapper;
 		this.address = unixSocketAddress;
-		this.serverSocketChannel = new UDSServerNonBlockingSocketChannel();
 	}
 
 	@Override
 	public void setSessionFactory(McpServerSession.Factory sessionFactory) {
+		this.transport = new UDSMcpSessionTransport();
+		this.session = sessionFactory.create(transport);
+		this.transport.initProcessing();
+		// Also start listening for accept
 		try {
+			this.serverSocketChannel = new UDSServerNonBlockingSocketChannel();
 			this.serverSocketChannel.start(this.address, (clientChannel) -> {
-				this.transport = new UDSMcpSessionTransport();
-				this.session = sessionFactory.create(transport);
-				this.transport.initProcessing();
+				if (logger.isDebugEnabled()) {
+					logger.debug("Accepted connect from clientChannel=" + clientChannel);
+				}
 			}, (dataLine) -> {
 				String message = (String) dataLine;
+				if (logger.isDebugEnabled()) {
+					logger.debug("Received message line=" + message);
+				}
 				try {
 					this.transport
 						.handleMessage(McpSchema.deserializeJsonRpcMessage(this.objectMapper, message.trim()));
@@ -71,6 +81,7 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 			});
 		}
 		catch (IOException e) {
+			// If this happens then we are doomed
 			this.serverSocketChannel.close();
 			throw new RuntimeException("accepterNonBlockSocketChannel could not be started");
 		}
@@ -114,10 +125,6 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 			this.inboundSink = Sinks.many().unicast().onBackpressureBuffer();
 			this.outboundSink = Sinks.many().unicast().onBackpressureBuffer();
 
-			// Use bounded schedulers for better resource management
-			// this.inboundScheduler =
-			// Schedulers.fromExecutorService(Executors.newSingleThreadExecutor(),
-			// "uds-inbound");
 			this.outboundScheduler = Schedulers.fromExecutorService(Executors.newSingleThreadExecutor(),
 					"uds-outbound");
 		}

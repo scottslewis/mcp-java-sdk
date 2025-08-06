@@ -77,19 +77,12 @@ public class ServerNonBlockingSocketChannel extends NonBlockingSocketChannel {
 	public void close() {
 		SocketChannel client = this.acceptedClient;
 		if (client != null) {
-			try {
-				hardCloseClient(client, (c) -> {
-					if (logger.isDebugEnabled()) {
-						logger.debug("Unsetting client=" + c);
-					}
-					this.acceptedClient = null;
-				});
-			}
-			catch (IOException e) {
+			hardCloseClient(client, (c) -> {
 				if (logger.isDebugEnabled()) {
-					logger.debug("Exception in hardCloseClient", e);
+					logger.debug("Unsetting client=" + c);
 				}
-			}
+				this.acceptedClient = null;
+			});
 		}
 	}
 

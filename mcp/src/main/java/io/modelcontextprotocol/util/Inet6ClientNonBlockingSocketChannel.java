@@ -14,16 +14,15 @@ public class Inet6ClientNonBlockingSocketChannel extends ClientNonBlockingSocket
 		super();
 	}
 
-	public Inet6ClientNonBlockingSocketChannel(Selector selector, int incomingBufferSize, ExecutorService executor)
-			throws IOException {
+	public Inet6ClientNonBlockingSocketChannel(Selector selector, int incomingBufferSize, ExecutorService executor) {
 		super(selector, incomingBufferSize, executor);
 	}
 
-	public Inet6ClientNonBlockingSocketChannel(Selector selector, int incomingBufferSize) throws IOException {
+	public Inet6ClientNonBlockingSocketChannel(Selector selector, int incomingBufferSize) {
 		super(selector, incomingBufferSize);
 	}
 
-	public Inet6ClientNonBlockingSocketChannel(Selector selector) throws IOException {
+	public Inet6ClientNonBlockingSocketChannel(Selector selector) {
 		super(selector);
 	}
 

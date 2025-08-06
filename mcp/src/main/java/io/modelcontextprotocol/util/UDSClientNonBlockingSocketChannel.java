@@ -9,8 +9,7 @@ import java.util.concurrent.ExecutorService;
 
 public class UDSClientNonBlockingSocketChannel extends ClientNonBlockingSocketChannel {
 
-	public UDSClientNonBlockingSocketChannel(Selector selector, int incomingBufferSize, ExecutorService executor)
-			throws IOException {
+	public UDSClientNonBlockingSocketChannel(Selector selector, int incomingBufferSize, ExecutorService executor) {
 		super(selector, incomingBufferSize, executor);
 	}
 
