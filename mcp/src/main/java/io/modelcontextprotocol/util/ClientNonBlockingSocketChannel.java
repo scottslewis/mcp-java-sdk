@@ -17,8 +17,7 @@ public class ClientNonBlockingSocketChannel extends NonBlockingSocketChannel {
 
 	private SocketChannel client;
 
-	public ClientNonBlockingSocketChannel(Selector selector, int incomingBufferSize, ExecutorService executor)
-			throws IOException {
+	public ClientNonBlockingSocketChannel(Selector selector, int incomingBufferSize, ExecutorService executor) {
 		super(selector, incomingBufferSize, executor);
 	}
 
@@ -52,16 +51,9 @@ public class ClientNonBlockingSocketChannel extends NonBlockingSocketChannel {
 
 	@Override
 	public void close() {
-		try {
-			hardCloseClient(this.client, (client) -> {
-				this.client = null;
-			});
-		}
-		catch (IOException e) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Exception in hardCloseClient", e);
-			}
-		}
+		hardCloseClient(this.client, (client) -> {
+			this.client = null;
+		});
 	}
 
 	public void writeMessageBlocking(String message) throws IOException {
