@@ -35,7 +35,8 @@ class UDSMcpAsyncServerTests extends AbstractMcpAsyncServerTests {
 		if (address != null) {
 			try {
 				Files.deleteIfExists(address.getPath());
-			} catch (IOException e) {
+			}
+			catch (IOException e) {
 			}
 		}
 	}
