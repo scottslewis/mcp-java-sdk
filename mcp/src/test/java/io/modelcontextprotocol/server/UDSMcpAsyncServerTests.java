@@ -14,9 +14,10 @@ import io.modelcontextprotocol.server.transport.UDSServerTransportProvider;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 
 /**
- * Tests for {@link McpAsyncServer} using {@link StdioServerTransport}.
+ * Tests for {@link McpAsyncServer} using {@link UDSServerTransport}.
  *
  * @author Christian Tzolov
+ * @author Scott Lewis
  */
 @Timeout(15) // Giving extra time beyond the client timeout
 class UDSMcpAsyncServerTests extends AbstractMcpAsyncServerTests {
