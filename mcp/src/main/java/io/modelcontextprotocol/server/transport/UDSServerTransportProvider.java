@@ -58,7 +58,10 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 	public void setSessionFactory(McpServerSession.Factory sessionFactory) {
 		this.transport = new UDSMcpSessionTransport();
 		this.session = sessionFactory.create(transport);
-		this.transport.initProcessing();
+		this.transport.handleIncomingMessages();
+		if (this.transport.isStarted.compareAndSet(false, true)) {
+			inboundReady.tryEmitValue(null);
+		}
 		// Also start listening for accept
 		try {
 			this.serverSocketChannel = new UDSServerNonBlockingSocketChannel();
@@ -66,6 +69,8 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Accepted connect from clientChannel=" + clientChannel);
 				}
+				// Start outbound processing now that the clientChannel has been accepted
+				this.transport.startOutboundProcessing();
 			}, (dataLine) -> {
 				String message = (String) dataLine;
 				if (logger.isDebugEnabled()) {
@@ -171,16 +176,7 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 		@Override
 		public void close() {
 			isClosing.set(true);
-			serverSocketChannel.close();
 			logger.debug("Session transport closed");
-		}
-
-		private void initProcessing() {
-			handleIncomingMessages();
-			if (isStarted.compareAndSet(false, true)) {
-				inboundReady.tryEmitValue(null);
-			}
-			startOutboundProcessing();
 		}
 
 		private void handleIncomingMessages() {
