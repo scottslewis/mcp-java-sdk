@@ -23,26 +23,27 @@ import io.modelcontextprotocol.spec.McpServerTransportProvider;
 class UDSMcpSyncServerTests extends AbstractMcpSyncServerTests {
 
 	private UnixDomainSocketAddress address;
-	
+
 	@Override
 	protected void setUp() {
 		super.onStart();
-		address = UnixDomainSocketAddress.of(getClass().getName()+".unix.socket");
+		address = UnixDomainSocketAddress.of(getClass().getName() + ".unix.socket");
 	}
-	
+
 	@Override
 	protected void tearDown() {
 		super.onClose();
 		if (address != null) {
 			try {
 				Files.deleteIfExists(address.getPath());
-			} catch (IOException e) {
+			}
+			catch (IOException e) {
 			}
 		}
 	}
-	
+
 	protected McpServerTransportProvider createMcpTransportProvider() {
-			return new UDSServerTransportProvider(address);
+		return new UDSServerTransportProvider(address);
 	}
 
 	@Override
