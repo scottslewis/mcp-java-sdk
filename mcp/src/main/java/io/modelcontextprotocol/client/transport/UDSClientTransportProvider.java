@@ -41,6 +41,10 @@ public class UDSClientTransportProvider implements McpClientTransport {
 
 	private volatile boolean isClosing = false;
 
+	public UDSClientTransportProvider(UnixDomainSocketAddress targetAddress)  throws IOException {
+		this(new ObjectMapper(), targetAddress);
+	}
+	
 	public UDSClientTransportProvider(ObjectMapper objectMapper, UnixDomainSocketAddress targetAddress)
 			throws IOException {
 		Assert.notNull(objectMapper, "The ObjectMapper can not be null");
@@ -159,9 +163,7 @@ public class UDSClientTransportProvider implements McpClientTransport {
 				this.clientChannel = null;
 			}
 			return Mono.empty();
-		})).doOnNext(o -> {
-			logger.info("MCP server process stopped");
-		}).then(Mono.fromRunnable(() -> {
+		})).then(Mono.fromRunnable(() -> {
 			try {
 				// The Threads are blocked on readLine so disposeGracefully would not
 				// interrupt them, therefore we issue an async hard dispose.
