@@ -10,7 +10,6 @@ import java.nio.file.Files;
 
 import org.junit.jupiter.api.Timeout;
 
-import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.server.transport.UDSServerTransportProvider;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 
