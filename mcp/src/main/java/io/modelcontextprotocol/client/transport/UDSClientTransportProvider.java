@@ -77,26 +77,6 @@ public class UDSClientTransportProvider implements McpClientTransport {
 	}
 
 	/**
-	 * Creates a new StdioClientTransport with the specified parameters and ObjectMapper.
-	 * @param params The parameters for configuring the server process
-	 * @param objectMapper The ObjectMapper to use for JSON serialization/deserialization
-	 */
-	public UDSClientTransportProvider(ServerParameters params, ObjectMapper objectMapper) {
-		Assert.notNull(params, "The params can not be null");
-		Assert.notNull(objectMapper, "The ObjectMapper can not be null");
-
-		this.inboundSink = Sinks.many().unicast().onBackpressureBuffer();
-		this.outboundSink = Sinks.many().unicast().onBackpressureBuffer();
-
-		this.objectMapper = objectMapper;
-
-		this.errorSink = Sinks.many().unicast().onBackpressureBuffer();
-
-		// Start thread for outbound
-		this.outboundScheduler = Schedulers.fromExecutorService(Executors.newSingleThreadExecutor(), "outbound");
-	}
-
-	/**
 	 * Starts the server process and initializes the message processing streams. This
 	 * method sets up the process with the configured command, arguments, and environment,
 	 * then starts the inbound, outbound, and error processing threads.
