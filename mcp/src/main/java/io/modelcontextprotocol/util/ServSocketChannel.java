@@ -70,7 +70,8 @@ public class ServSocketChannel extends AbstractSocketChannel {
 		SocketChannel c = this.acceptedClient;
 		if (c != null) {
 			writeMessageToChannel(c, message);
-		} else {
+		}
+		else {
 			throw new IOException("not connected");
 		}
 	}

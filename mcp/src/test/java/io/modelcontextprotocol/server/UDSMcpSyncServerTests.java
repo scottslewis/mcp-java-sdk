@@ -29,15 +29,16 @@ class UDSMcpSyncServerTests extends AbstractMcpSyncServerTests {
 	private void deleteSocketPath() {
 		try {
 			Files.deleteIfExists(socketPath);
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
+
 	protected void onStart() {
 		super.onStart();
 		deleteSocketPath();
 	}
-
 
 	@Override
 	protected void onClose() {

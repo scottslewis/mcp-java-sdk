@@ -113,17 +113,21 @@ public abstract class AbstractSocketChannel {
 						key = iter.next();
 						if (key.isConnectable()) {
 							handleConnectable(key, connectHandler);
-						} else if (key.isAcceptable()) {
+						}
+						else if (key.isAcceptable()) {
 							handleAcceptable(key, acceptHandler);
-						} else if (key.isReadable()) {
+						}
+						else if (key.isReadable()) {
 							handleReadable(key, readHandler);
-						} else if (key.isWritable()) {
+						}
+						else if (key.isWritable()) {
 							handleWritable(key);
 						}
 						iter.remove();
 					}
 				}
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				handleException(key, e);
 			}
 		};
@@ -215,7 +219,8 @@ public abstract class AbstractSocketChannel {
 					readHandler.apply(messages[i]);
 				}
 			}
-		} else {
+		}
+		else {
 			io.reading = sb;
 			debug("read partial=%s", partial);
 		}
@@ -251,7 +256,8 @@ public abstract class AbstractSocketChannel {
 				debug("doWrite written=%s, remaining=%s", written, buf.remaining());
 				io.writing = buf.slice();
 				key.interestOpsOr(SelectionKey.OP_WRITE);
-			} else {
+			}
+			else {
 				if (logger.isDebugEnabled()) {
 					logger.debug("doWrite message=%s", new String(buf.array(), 0, written));
 				}
@@ -270,7 +276,8 @@ public abstract class AbstractSocketChannel {
 			try {
 				this.executor.awaitTermination(this.terminationTimeout, TimeUnit.MILLISECONDS);
 				this.executor.shutdown();
-			} catch (InterruptedException e) {
+			}
+			catch (InterruptedException e) {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Exception in executor awaitTermination", e);
 				}
@@ -287,7 +294,8 @@ public abstract class AbstractSocketChannel {
 						closeHandler.apply(client);
 					}
 					client.close();
-				} catch (IOException e) {
+				}
+				catch (IOException e) {
 					if (logger.isDebugEnabled()) {
 						logger.debug("hardClose client socketchannel.close exception", e);
 					}
@@ -301,9 +309,11 @@ public abstract class AbstractSocketChannel {
 		Objects.requireNonNull(client, "Client must not be null");
 		Objects.requireNonNull(message, "Message must not be null");
 		// Escape any embedded newlines in the JSON message
-		String outputMessage = message.replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\n")
-				// add message delimiter
-				.concat(DEFAULT_MESSAGE_DELIMITER);
+		String outputMessage = message.replace("\r\n", "\\n")
+			.replace("\n", "\\n")
+			.replace("\r", "\\n")
+			// add message delimiter
+			.concat(DEFAULT_MESSAGE_DELIMITER);
 		debug("writing msg=%s", outputMessage);
 		synchronized (writeLock) {
 			// do the non blocking write in thread while holding lock.
@@ -321,7 +331,8 @@ public abstract class AbstractSocketChannel {
 				try {
 					debug("writeBlocking WAITING(ms)=%s msg=%s", String.valueOf(waitTime / 10), outputMessage);
 					writeLock.wait(waitTime / 10);
-				} catch (InterruptedException e) {
+				}
+				catch (InterruptedException e) {
 					throw new InterruptedIOException("write message wait interrupted");
 				}
 			}

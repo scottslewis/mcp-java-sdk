@@ -49,7 +49,6 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 
 	/**
 	 * Creates a new UDSServerTransportProvider with a default ObjectMapper
-	 * 
 	 * @param unixSocketAddress the UDS socket address to bind to. Must not be null.
 	 */
 	public UDSServerTransportProvider(UnixDomainSocketAddress unixSocketAddress) {
@@ -58,9 +57,7 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 
 	/**
 	 * Creates a new UDSServerTransportProvider with the specified ObjectMapper
-	 * 
-	 * @param objectMapper The ObjectMapper to use for JSON
-	 *                     serialization/deserialization
+	 * @param objectMapper The ObjectMapper to use for JSON serialization/deserialization
 	 */
 	public UDSServerTransportProvider(ObjectMapper objectMapper, UnixDomainSocketAddress unixSocketAddress) {
 		Assert.notNull(objectMapper, "objectMapper cannot be null");
@@ -87,7 +84,7 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 			return Mono.error(new McpError("No session to close"));
 		}
 		return this.session.sendNotification(method, params)
-				.doOnError(e -> logger.error("Failed to send notification: {}", e.getMessage()));
+			.doOnError(e -> logger.error("Failed to send notification: {}", e.getMessage()));
 	}
 
 	@Override
@@ -131,7 +128,8 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 						inboundSink.tryEmitComplete();
 					}
 				};
-			} catch (IOException e) {
+			}
+			catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -204,15 +202,16 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 							throw new IOException("Error adding jsonMessge to inboundSink");
 						}
 					});
-				} catch (IOException e) {
+				}
+				catch (IOException e) {
 					throw new RuntimeException(e);
 				}
 			}
 		}
 
 		/**
-		 * Starts the outbound processing thread that writes JSON-RPC messages to
-		 * stdout. Messages are serialized to JSON and written with a newline delimiter.
+		 * Starts the outbound processing thread that writes JSON-RPC messages to stdout.
+		 * Messages are serialized to JSON and written with a newline delimiter.
 		 */
 		private void startOutboundProcessing() {
 			Function<Flux<JSONRPCMessage>, Flux<JSONRPCMessage>> outboundConsumer = messages -> messages // @formatter:off

@@ -18,7 +18,7 @@ public class ClientSocketChannel extends AbstractSocketChannel {
 	protected SocketChannel client;
 
 	protected final Object connectLock = new Object();
-	
+
 	public ClientSocketChannel(Selector selector, int incomingBufferSize, ExecutorService executor) {
 		super(selector, incomingBufferSize, executor);
 	}
@@ -60,12 +60,12 @@ public class ClientSocketChannel extends AbstractSocketChannel {
 			}
 		}
 		catch (InterruptedException e) {
-			throw new IOException("Connect to address=" + address + " timed out after " + String.valueOf(this.connectTimeout)+ "ms" );
+			throw new IOException(
+					"Connect to address=" + address + " timed out after " + String.valueOf(this.connectTimeout) + "ms");
 		}
 		debug("connected client=%s", client);
 		return client;
 	}
-
 
 	public void connect(StandardProtocolFamily protocol, SocketAddress address,
 			IOConsumer<SocketChannel> connectHandler, IOConsumer<String> readHandler) throws IOException {

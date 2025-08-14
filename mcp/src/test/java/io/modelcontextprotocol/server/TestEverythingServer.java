@@ -137,8 +137,7 @@ public class TestEverythingServer {
 			.resources(specs)
 			.build();
 	}
-	
-	
+
 	public void closeGracefully() {
 		if (this.server != null) {
 			this.server.closeGracefully();
