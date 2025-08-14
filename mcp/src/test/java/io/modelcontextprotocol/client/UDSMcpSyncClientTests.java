@@ -7,12 +7,14 @@ package io.modelcontextprotocol.client;
 import java.io.IOException;
 import java.net.UnixDomainSocketAddress;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 
 import org.junit.jupiter.api.Timeout;
 
 import io.modelcontextprotocol.client.transport.UDSClientTransportProvider;
-import io.modelcontextprotocol.server.EverythingServer;
+import io.modelcontextprotocol.server.TestEverythingServer;
 import io.modelcontextprotocol.server.transport.UDSServerTransportProvider;
 import io.modelcontextprotocol.spec.McpClientTransport;
 
@@ -26,40 +28,37 @@ import io.modelcontextprotocol.spec.McpClientTransport;
 @Timeout(15) // Giving extra time beyond the client timeout
 class UDSMcpSyncClientTests extends AbstractMcpSyncClientTests {
 
-	UnixDomainSocketAddress address;
-	EverythingServer server;
+	private Path socketPath = Paths.get(getClass().getName() + ".unix.socket");
 
-	@Override
-	protected void onStart() {
-		this.address = UnixDomainSocketAddress.of(getClass().getName() + ".socket");
+	private void deleteSocketPath() {
 		try {
-			// Delete this file if exists from previous run
-			Files.deleteIfExists(this.address.getPath());
+			Files.deleteIfExists(socketPath);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		this.server = new EverythingServer(new UDSServerTransportProvider(address));
+	}
+	
+	protected void onStart() {
+		super.onStart();
+		deleteSocketPath();
+		this.server = new TestEverythingServer(new UDSServerTransportProvider(UnixDomainSocketAddress.of(socketPath)));
 	}
 
 	@Override
 	protected void onClose() {
-		server.closeGracefully();
-		server = null;
-		try {
-			Files.deleteIfExists(address.getPath());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		super.onClose();
+		if (server != null) {
+			server.closeGracefully();
+			server = null;
 		}
-		address = null;
+		deleteSocketPath();
 	}
+
+	private TestEverythingServer server;
 
 	@Override
 	protected McpClientTransport createMcpTransport() {
-		try {
-			return new UDSClientTransportProvider(address);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		return new UDSClientTransportProvider(UnixDomainSocketAddress.of(socketPath));
 	}
 
 	protected Duration getInitializationTimeout() {

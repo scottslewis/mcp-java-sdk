@@ -19,23 +19,51 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class NonBlockingSocketChannel {
+public abstract class AbstractSocketChannel {
 
-	private static final Logger logger = LoggerFactory.getLogger(NonBlockingSocketChannel.class);
+	private static final Logger logger = LoggerFactory.getLogger(AbstractSocketChannel.class);
 
 	public static final int DEFAULT_INBUFFER_SIZE = 1024;
 
-	protected static String MESSAGE_DELIMITER = "\n";
+	public static String DEFAULT_MESSAGE_DELIMITER = "\n";
 
-	protected static int BLOCKING_WRITE_TIMEOUT = 5000;
+	protected String messageDelimiter = DEFAULT_MESSAGE_DELIMITER;
 
-	protected static int BLOCKING_CONNECT_TIMEOUT = 10000;
+	protected void setMessageDelimiter(String delim) {
+		this.messageDelimiter = delim;
+	}
+
+	public static int DEFAULT_WRITE_TIMEOUT = 5000; // ms
+
+	protected int writeTimeout = DEFAULT_WRITE_TIMEOUT;
+
+	protected void setWriteTimeout(int timeout) {
+		this.writeTimeout = timeout;
+	}
+
+	public static int DEFAULT_CONNECT_TIMEOUT = 10000; // ms
+
+	protected int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
+
+	protected void setConnectTimeout(int timeout) {
+		this.connectTimeout = timeout;
+	}
+
+	public static int DEFAULT_TERMINATION_TIMEOUT = 2000; // ms
+
+	protected int terminationTimeout = DEFAULT_TERMINATION_TIMEOUT;
+
+	protected void setTerminationTimeout(int timeout) {
+		this.terminationTimeout = timeout;
+	}
 
 	protected final Selector selector;
 
 	protected final ByteBuffer inBuffer;
 
 	protected final ExecutorService executor;
+
+	private final Object writeLock = new Object();
 
 	@FunctionalInterface
 	public interface IOConsumer<T> {
@@ -52,22 +80,22 @@ public abstract class NonBlockingSocketChannel {
 
 	}
 
-	public NonBlockingSocketChannel(Selector selector, int incomingBufferSize, ExecutorService executor) {
+	public AbstractSocketChannel(Selector selector, int incomingBufferSize, ExecutorService executor) {
 		Assert.notNull(selector, "Selector must not be null");
 		this.selector = selector;
 		this.inBuffer = ByteBuffer.allocate(incomingBufferSize);
 		this.executor = (executor == null) ? Executors.newSingleThreadExecutor() : executor;
 	}
 
-	public NonBlockingSocketChannel(Selector selector, int incomingBufferSize) {
+	public AbstractSocketChannel(Selector selector, int incomingBufferSize) {
 		this(selector, incomingBufferSize, null);
 	}
 
-	public NonBlockingSocketChannel(Selector selector) {
+	public AbstractSocketChannel(Selector selector) {
 		this(selector, DEFAULT_INBUFFER_SIZE);
 	}
 
-	public NonBlockingSocketChannel() throws IOException {
+	public AbstractSocketChannel() throws IOException {
 		this(Selector.open());
 	}
 
@@ -77,28 +105,25 @@ public abstract class NonBlockingSocketChannel {
 			SelectionKey key = null;
 			try {
 				while (true) {
-					this.selector.select();
+					int count = this.selector.select();
+					debug("Select returned count=%s", count);
 					Set<SelectionKey> selectedKeys = selector.selectedKeys();
 					Iterator<SelectionKey> iter = selectedKeys.iterator();
 					while (iter.hasNext()) {
 						key = iter.next();
 						if (key.isConnectable()) {
 							handleConnectable(key, connectHandler);
-						}
-						else if (key.isAcceptable()) {
+						} else if (key.isAcceptable()) {
 							handleAcceptable(key, acceptHandler);
-						}
-						else if (key.isReadable()) {
+						} else if (key.isReadable()) {
 							handleReadable(key, readHandler);
-						}
-						else if (key.isWritable()) {
+						} else if (key.isWritable()) {
 							handleWritable(key);
 						}
 						iter.remove();
 					}
 				}
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				handleException(key, e);
 			}
 		};
@@ -113,48 +138,40 @@ public abstract class NonBlockingSocketChannel {
 		this.executor.execute(getRunnableForProcessing(acceptHandler, connectHandler, readHandler));
 	}
 
+	protected void debug(String format, Object... o) {
+		if (logger.isDebugEnabled()) {
+			logger.debug(format, o);
+		}
+	}
+
 	// For client subclasses
 	protected void handleConnectable(SelectionKey key, IOConsumer<SocketChannel> connectHandler) throws IOException {
 		SocketChannel client = (SocketChannel) key.channel();
-		Object lock = client.blockingLock();
-		if (logger.isDebugEnabled()) {
-			logger.debug("handleConnectable client=" + client.getRemoteAddress());
+		debug("client=%s", client);
+		client.configureBlocking(false);
+		client.register(this.selector, SelectionKey.OP_READ, new AttachedIO());
+		if (client.isConnectionPending()) {
+			client.finishConnect();
+			debug("connected client=%s", client);
 		}
-		synchronized (lock) {
-			client.configureBlocking(false);
-			client.register(this.selector, SelectionKey.OP_READ, new AttachedIO());
-			if (client.isConnectionPending()) {
-				client.finishConnect();
-				if (logger.isDebugEnabled()) {
-					logger.debug("handleConnectable FINISHED");
-				}
-			}
-			if (connectHandler != null) {
-				connectHandler.apply(client);
-			}
+		if (connectHandler != null) {
+			connectHandler.apply(client);
 		}
 	}
 
 	protected void handleAcceptable(SelectionKey key, IOConsumer<SocketChannel> acceptHandler) throws IOException {
 		ServerSocketChannel serverSocket = (ServerSocketChannel) key.channel();
 		SocketChannel client = serverSocket.accept();
-		Object lock = client.blockingLock();
-		if (logger.isDebugEnabled()) {
-			logger.debug("handleAcceptable client=" + client);
+		debug("client=%s", client);
+		client.configureBlocking(false);
+		client.register(this.selector, SelectionKey.OP_READ, new AttachedIO());
+		configureAcceptSocketChannel(client);
+		if (client.isConnectionPending()) {
+			client.finishConnect();
+			debug("accepted client=%s", client);
 		}
-		synchronized (lock) {
-			client.configureBlocking(false);
-			client.register(this.selector, SelectionKey.OP_READ, new AttachedIO());
-			configureAcceptSocketChannel(client);
-			if (client.isConnectionPending()) {
-				client.finishConnect();
-				if (logger.isDebugEnabled()) {
-					logger.debug("handleAcceptable FINISHED");
-				}
-			}
-			if (acceptHandler != null) {
-				acceptHandler.apply(client);
-			}
+		if (acceptHandler != null) {
+			acceptHandler.apply(client);
 		}
 	}
 
@@ -172,42 +189,35 @@ public abstract class NonBlockingSocketChannel {
 
 	protected void handleReadable(SelectionKey key, IOConsumer<String> readHandler) throws IOException {
 		SocketChannel client = (SocketChannel) key.channel();
-		Object lock = client.blockingLock();
 		AttachedIO io = getAttachedIO(key);
-		if (logger.isDebugEnabled()) {
-			logger.debug("handleReadable client=" + client);
+		debug("read client=%s", client);
+		// read
+		int r = client.read(this.inBuffer);
+		// Check if we should expect any more reads
+		if (r == -1) {
+			throw new IOException("Channel read reached end of stream");
 		}
-		synchronized (lock) {
-			// non-blocking read here
-			int r = client.read(this.inBuffer);
-			// Check if we should expect any more reads
-			if (r == -1) {
-				throw new IOException("Channel read reached end of stream");
-			}
-			this.inBuffer.flip();
-			String partial = new String(this.inBuffer.array(), 0, r, StandardCharsets.UTF_8);
-			// If there is are previous partial, then get the io.reading string Buffer
-			StringBuffer sb = (io.reading != null) ? (StringBuffer) io.reading : new StringBuffer();
-			// And append the just read partial to the string buffer
-			sb.append(partial);
-			if (partial.endsWith(MESSAGE_DELIMITER)) {
-				// Get the entire message from the string buffer
-				String message = sb.toString();
-				// Set the io.reading value to null as we are done with this message
-				io.reading = null;
-				if (logger.isDebugEnabled()) {
-					logger.debug("handleReadable COMPLETE msg=" + message);
-				}
-				if (readHandler != null) {
-					readHandler.apply(message);
+		this.inBuffer.flip();
+		String partial = new String(this.inBuffer.array(), 0, r, StandardCharsets.UTF_8);
+		// If there is previous partial, get the io.reading string Buffer
+		StringBuffer sb = (io.reading != null) ? (StringBuffer) io.reading : new StringBuffer();
+		// append the just read partial to the existing or new string buffer
+		sb.append(partial);
+		if (partial.endsWith(messageDelimiter)) {
+			// Get the entire message from the string buffer
+			String message = sb.toString();
+			// Set the io.reading value to null as we are done with this message
+			io.reading = null;
+			debug("read client=%s msg=", client, message);
+			if (readHandler != null) {
+				String[] messages = splitMessage(message);
+				for (int i = 0; i < messages.length; i++) {
+					readHandler.apply(messages[i]);
 				}
 			}
-			else {
-				io.reading = sb;
-				if (logger.isDebugEnabled()) {
-					logger.debug("handleReadable PARTIAL msg=" + partial);
-				}
-			}
+		} else {
+			io.reading = sb;
+			debug("read partial=%s", partial);
 		}
 		// Clear inbuffer for next read
 		this.inBuffer.clear();
@@ -217,12 +227,9 @@ public abstract class NonBlockingSocketChannel {
 		ByteBuffer buf = getAttachedIO(key).writing;
 		SocketChannel client = (SocketChannel) key.channel();
 		if (buf != null) {
-			doWrite(key, client, buf, (lock) -> {
-				synchronized (lock) {
-					if (logger.isDebugEnabled()) {
-						logger.debug("handleWritable NOTIFY client=" + client);
-					}
-					lock.notifyAll();
+			doWrite(key, client, buf, (o) -> {
+				synchronized (writeLock) {
+					writeLock.notifyAll();
 				}
 			});
 		}
@@ -231,9 +238,6 @@ public abstract class NonBlockingSocketChannel {
 	protected void doWrite(SocketChannel client, String message, IOConsumer<Object> writeHandler) throws IOException {
 		Assert.notNull(client, "Client must not be null");
 		Assert.notNull(message, "Message must not be null");
-		if (logger.isDebugEnabled()) {
-			logger.debug("doWrite msg=" + message);
-		}
 		doWrite(client.keyFor(this.selector), client, ByteBuffer.wrap(message.getBytes(StandardCharsets.UTF_8)),
 				writeHandler);
 	}
@@ -241,24 +245,20 @@ public abstract class NonBlockingSocketChannel {
 	protected void doWrite(SelectionKey key, SocketChannel client, ByteBuffer buf, IOConsumer<Object> writeHandler)
 			throws IOException {
 		AttachedIO io = (AttachedIO) key.attachment();
-		Object lock = client.blockingLock();
-		synchronized (lock) {
+		synchronized (writeLock) {
 			int written = client.write(buf);
 			if (buf.hasRemaining()) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("doWrite PARTIAL written=" + written + " remaining=" + buf.remaining());
-				}
+				debug("doWrite written=%s, remaining=%s", written, buf.remaining());
 				io.writing = buf.slice();
 				key.interestOpsOr(SelectionKey.OP_WRITE);
-			}
-			else {
+			} else {
 				if (logger.isDebugEnabled()) {
-					logger.debug("doWrite COMPLETED msg=" + new String(buf.array(), 0, written));
+					logger.debug("doWrite message=%s", new String(buf.array(), 0, written));
 				}
 				io.writing = null;
 				key.interestOps(SelectionKey.OP_READ);
 				if (writeHandler != null) {
-					writeHandler.apply(lock);
+					writeHandler.apply(null);
 				}
 			}
 		}
@@ -266,14 +266,11 @@ public abstract class NonBlockingSocketChannel {
 
 	protected void executorShutdown() {
 		if (!this.executor.isShutdown()) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("executorShutdown");
-			}
+			debug("shutdown");
 			try {
-				this.executor.awaitTermination(2000, TimeUnit.MILLISECONDS);
+				this.executor.awaitTermination(this.terminationTimeout, TimeUnit.MILLISECONDS);
 				this.executor.shutdown();
-			}
-			catch (InterruptedException e) {
+			} catch (InterruptedException e) {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Exception in executor awaitTermination", e);
 				}
@@ -283,19 +280,14 @@ public abstract class NonBlockingSocketChannel {
 
 	protected void hardCloseClient(SocketChannel client, IOConsumer<SocketChannel> closeHandler) {
 		if (client != null) {
-			Object lock = client.blockingLock();
-			if (logger.isDebugEnabled()) {
-				logger.debug("hardCloseClient client=" + client);
-			}
-			synchronized (lock) {
+			debug("hardClose client=%s", client);
+			synchronized (writeLock) {
 				try {
 					if (closeHandler != null) {
 						closeHandler.apply(client);
 					}
 					client.close();
-					client = null;
-				}
-				catch (IOException e) {
+				} catch (IOException e) {
 					if (logger.isDebugEnabled()) {
 						logger.debug("hardClose client socketchannel.close exception", e);
 					}
@@ -305,23 +297,19 @@ public abstract class NonBlockingSocketChannel {
 		}
 	}
 
-	protected void writeBlocking(SocketChannel client, String message) throws IOException {
+	protected void writeMessageToChannel(SocketChannel client, String message) throws IOException {
 		Objects.requireNonNull(client, "Client must not be null");
 		Objects.requireNonNull(message, "Message must not be null");
-		// Escape any embedded newlines in the JSON message, and add newline
-		String outputMessage = message.replace("\r\n", "\\n")
-			.replace("\n", "\\n")
-			.replace("\r", "\\n")
-			.concat(MESSAGE_DELIMITER);
-		Object lock = client.blockingLock();
-		if (logger.isDebugEnabled()) {
-			logger.debug("writeBlocking msg=" + outputMessage);
-		}
-		synchronized (lock) {
+		// Escape any embedded newlines in the JSON message
+		String outputMessage = message.replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\n")
+				// add message delimiter
+				.concat(DEFAULT_MESSAGE_DELIMITER);
+		debug("writing msg=%s", outputMessage);
+		synchronized (writeLock) {
 			// do the non blocking write in thread while holding lock.
 			doWrite(client, outputMessage, null);
 			ByteBuffer bufRemaining = null;
-			long waitTime = System.currentTimeMillis() + BLOCKING_WRITE_TIMEOUT;
+			long waitTime = System.currentTimeMillis() + this.writeTimeout;
 			while (waitTime - System.currentTimeMillis() > 0) {
 				// Before releasing lock, check for writing buffer remaining
 				bufRemaining = getAttachedIO(client.keyFor(this.selector)).writing;
@@ -331,13 +319,9 @@ public abstract class NonBlockingSocketChannel {
 				}
 				// If write is *not* completed, then wait timeout /10
 				try {
-					if (logger.isDebugEnabled()) {
-						logger
-							.debug("writeBlocking WAITING=" + String.valueOf(waitTime / 10) + " msg=" + outputMessage);
-					}
-					lock.wait(waitTime / 10);
-				}
-				catch (InterruptedException e) {
+					debug("writeBlocking WAITING(ms)=%s msg=%s", String.valueOf(waitTime / 10), outputMessage);
+					writeLock.wait(waitTime / 10);
+				} catch (InterruptedException e) {
 					throw new InterruptedIOException("write message wait interrupted");
 				}
 			}
@@ -345,9 +329,7 @@ public abstract class NonBlockingSocketChannel {
 				throw new IOException("Write not completed.  Non empty buffer remaining after timeout");
 			}
 		}
-		if (logger.isDebugEnabled()) {
-			logger.debug("writeBlocking COMPLETED msg=" + outputMessage);
-		}
+		debug("writing done msg=%s", outputMessage);
 	}
 
 	protected void configureConnectSocketChannel(SocketChannel client, SocketAddress connectAddress)
@@ -355,43 +337,8 @@ public abstract class NonBlockingSocketChannel {
 		// Subclasses may override
 	}
 
-	protected SocketChannel connectBlocking(SocketChannel client, SocketAddress address,
-			IOConsumer<SocketChannel> connectHandler, IOConsumer<String> readHandler) throws IOException {
-		Object lock = client.blockingLock();
-		if (logger.isDebugEnabled()) {
-			logger.debug("connectBlocking CONNECTING targetAddress=" + address);
-		}
-		synchronized (lock) {
-			client.configureBlocking(false);
-			client.register(selector, SelectionKey.OP_CONNECT);
-			configureConnectSocketChannel(client, address);
-			// Start the read thread before connect
-			// No/null accept handler for clients
-			start(null, (c) -> {
-				synchronized (lock) {
-					if (connectHandler != null) {
-						connectHandler.apply(c);
-					}
-					lock.notifyAll();
-				}
-			}, readHandler);
-
-			client.connect(address);
-
-			try {
-				if (logger.isDebugEnabled()) {
-					logger.debug("connectBlocking WAITING targetAddress=" + address);
-				}
-				lock.wait(BLOCKING_CONNECT_TIMEOUT);
-			}
-			catch (InterruptedException e) {
-				throw new IOException("Connect to address=" + address + " timed out");
-			}
-			if (logger.isDebugEnabled()) {
-				logger.debug("connectBlocking CONNECTED client=" + client.getLocalAddress() + " connecting=" + address);
-			}
-			return client;
-		}
+	protected String[] splitMessage(String message) {
+		return (message == null) ? new String[0] : message.split(messageDelimiter);
 	}
 
 }

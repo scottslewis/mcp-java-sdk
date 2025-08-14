@@ -12,25 +12,25 @@ import java.util.concurrent.ExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ServerNonBlockingSocketChannel extends NonBlockingSocketChannel {
+public class ServSocketChannel extends AbstractSocketChannel {
 
-	private static final Logger logger = LoggerFactory.getLogger(ServerNonBlockingSocketChannel.class);
+	private static final Logger logger = LoggerFactory.getLogger(ServSocketChannel.class);
 
 	protected SocketChannel acceptedClient;
 
-	public ServerNonBlockingSocketChannel() throws IOException {
+	public ServSocketChannel() throws IOException {
 		super();
 	}
 
-	public ServerNonBlockingSocketChannel(Selector selector, int incomingBufferSize, ExecutorService executor) {
+	public ServSocketChannel(Selector selector, int incomingBufferSize, ExecutorService executor) {
 		super(selector, incomingBufferSize, executor);
 	}
 
-	public ServerNonBlockingSocketChannel(Selector selector, int incomingBufferSize) {
+	public ServSocketChannel(Selector selector, int incomingBufferSize) {
 		super(selector, incomingBufferSize);
 	}
 
-	public ServerNonBlockingSocketChannel(Selector selector) {
+	public ServSocketChannel(Selector selector) {
 		super(selector);
 	}
 
@@ -66,11 +66,13 @@ public class ServerNonBlockingSocketChannel extends NonBlockingSocketChannel {
 		close();
 	}
 
-	public void writeMessageBlocking(String message) throws IOException {
-		if (this.acceptedClient == null) {
-			throw new IOException("Cannot write until client connected");
+	public void writeMessage(String message) throws IOException {
+		SocketChannel c = this.acceptedClient;
+		if (c != null) {
+			writeMessageToChannel(c, message);
+		} else {
+			throw new IOException("not connected");
 		}
-		writeBlocking(acceptedClient, message);
 	}
 
 	@Override

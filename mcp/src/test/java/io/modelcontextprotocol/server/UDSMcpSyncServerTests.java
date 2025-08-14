@@ -7,6 +7,8 @@ package io.modelcontextprotocol.server;
 import java.io.IOException;
 import java.net.UnixDomainSocketAddress;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Timeout;
 
@@ -22,28 +24,29 @@ import io.modelcontextprotocol.spec.McpServerTransportProvider;
 @Timeout(15) // Giving extra time beyond the client timeout
 class UDSMcpSyncServerTests extends AbstractMcpSyncServerTests {
 
-	private UnixDomainSocketAddress address;
+	private Path socketPath = Paths.get(getClass().getName() + ".unix.socket");
 
-	@Override
-	protected void setUp() {
+	private void deleteSocketPath() {
+		try {
+			Files.deleteIfExists(socketPath);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	protected void onStart() {
 		super.onStart();
-		address = UnixDomainSocketAddress.of(getClass().getName() + ".unix.socket");
+		deleteSocketPath();
 	}
 
+
 	@Override
-	protected void tearDown() {
+	protected void onClose() {
 		super.onClose();
-		if (address != null) {
-			try {
-				Files.deleteIfExists(address.getPath());
-			}
-			catch (IOException e) {
-			}
-		}
+		deleteSocketPath();
 	}
 
 	protected McpServerTransportProvider createMcpTransportProvider() {
-		return new UDSServerTransportProvider(address);
+		return new UDSServerTransportProvider(UnixDomainSocketAddress.of(socketPath));
 	}
 
 	@Override

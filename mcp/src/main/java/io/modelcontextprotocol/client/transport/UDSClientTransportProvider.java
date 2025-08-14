@@ -2,8 +2,10 @@ package io.modelcontextprotocol.client.transport;
 
 import java.io.IOException;
 import java.net.UnixDomainSocketAddress;
+import java.nio.channels.SelectionKey;
 import java.time.Duration;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -16,7 +18,7 @@ import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.JSONRPCMessage;
 import io.modelcontextprotocol.util.Assert;
-import io.modelcontextprotocol.util.UDSClientNonBlockingSocketChannel;
+import io.modelcontextprotocol.util.UDSClientSocketChannel;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -25,7 +27,7 @@ import reactor.core.scheduler.Schedulers;
 
 public class UDSClientTransportProvider implements McpClientTransport {
 
-	private static final Logger logger = LoggerFactory.getLogger(UDSClientTransportProvider.class);
+	private static final Logger logger = LoggerFactory.getLogger(StdioClientTransport.class);
 
 	private final Sinks.Many<JSONRPCMessage> inboundSink;
 
@@ -33,20 +35,56 @@ public class UDSClientTransportProvider implements McpClientTransport {
 
 	private ObjectMapper objectMapper;
 
-	private UDSClientNonBlockingSocketChannel clientChannel;
+	/** Scheduler for handling outbound messages to the server process */
+	private Scheduler outboundScheduler;
+
+	private final Sinks.Many<String> errorSink;
+
+	private UDSClientSocketChannel clientChannel;
 
 	private UnixDomainSocketAddress targetAddress;
 
-	private Scheduler outboundScheduler;
-
 	private volatile boolean isClosing = false;
 
-	public UDSClientTransportProvider(UnixDomainSocketAddress targetAddress)  throws IOException {
+	// visible for tests
+	private Consumer<String> stdErrorHandler = error -> logger.info("STDERR Message received: {}", error);
+
+	public UDSClientTransportProvider(UnixDomainSocketAddress targetAddress) {
 		this(new ObjectMapper(), targetAddress);
 	}
-	
-	public UDSClientTransportProvider(ObjectMapper objectMapper, UnixDomainSocketAddress targetAddress)
-			throws IOException {
+
+	public UDSClientTransportProvider(ObjectMapper objectMapper, UnixDomainSocketAddress targetAddress) {
+		Assert.notNull(objectMapper, "objectMapper cannot be null");
+		this.objectMapper = objectMapper;
+		Assert.notNull(objectMapper, "targetAddress cannot be null");
+		this.targetAddress = targetAddress;
+		this.inboundSink = Sinks.many().unicast().onBackpressureBuffer();
+		this.outboundSink = Sinks.many().unicast().onBackpressureBuffer();
+		this.errorSink = Sinks.many().unicast().onBackpressureBuffer();
+		try {
+			this.clientChannel = new UDSClientSocketChannel() {
+				@Override
+				protected void handleException(SelectionKey key, Exception e) {
+					isClosing = true;
+					super.handleException(key, e);
+				}
+			};
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		this.outboundScheduler = Schedulers.fromExecutorService(Executors.newSingleThreadExecutor(), "outbound");
+	}
+
+	/**
+	 * Creates a new StdioClientTransport with the specified parameters and
+	 * ObjectMapper.
+	 * 
+	 * @param params       The parameters for configuring the server process
+	 * @param objectMapper The ObjectMapper to use for JSON
+	 *                     serialization/deserialization
+	 */
+	public UDSClientTransportProvider(ServerParameters params, ObjectMapper objectMapper) {
+		Assert.notNull(params, "The params can not be null");
 		Assert.notNull(objectMapper, "The ObjectMapper can not be null");
 
 		this.inboundSink = Sinks.many().unicast().onBackpressureBuffer();
@@ -54,76 +92,115 @@ public class UDSClientTransportProvider implements McpClientTransport {
 
 		this.objectMapper = objectMapper;
 
-		// Start threads
+		this.errorSink = Sinks.many().unicast().onBackpressureBuffer();
+
+		// Start thread for outbound
 		this.outboundScheduler = Schedulers.fromExecutorService(Executors.newSingleThreadExecutor(), "outbound");
-		this.clientChannel = new UDSClientNonBlockingSocketChannel();
-		this.targetAddress = targetAddress;
 	}
 
+	/**
+	 * Starts the server process and initializes the message processing streams.
+	 * This method sets up the process with the configured command, arguments, and
+	 * environment, then starts the inbound, outbound, and error processing threads.
+	 * 
+	 * @throws RuntimeException if the process fails to start or if the process
+	 *                          streams are null
+	 */
 	@Override
 	public Mono<Void> connect(Function<Mono<JSONRPCMessage>, Mono<JSONRPCMessage>> handler) {
 		return Mono.<Void>fromRunnable(() -> {
 			handleIncomingMessages(handler);
+			handleIncomingErrors();
+
+			// Connect client channel
 			try {
-				this.clientChannel.connectBlocking(targetAddress, (client) -> {
-					logger.info("CONNECTED to targetAddress=" + targetAddress);
-				}, (data) -> {
-					JSONRPCMessage json = McpSchema.deserializeJsonRpcMessage(this.objectMapper, data);
-					if (!this.inboundSink.tryEmitNext(json).isSuccess()) {
+				this.clientChannel.connect(targetAddress, (client) -> {
+					if (logger.isInfoEnabled()) {
+						logger.info("UDSClientTransportProvider CONNECTED to targetAddress=" + targetAddress);
+					}
+				}, (message) -> {
+					if (logger.isDebugEnabled()) {
+						logger.debug("received message=" + message);
+					}
+					// Incoming messages processed right here
+					McpSchema.JSONRPCMessage jsonMessage = McpSchema.deserializeJsonRpcMessage(objectMapper, message);
+					if (!this.inboundSink.tryEmitNext(jsonMessage).isSuccess()) {
 						if (!isClosing) {
-							logger.error("Failed to enqueue inbound message: {}", json);
+							if (logger.isDebugEnabled()) {
+								logger.error("Failed to enqueue inbound json message: {}", jsonMessage);
+							}
 						}
 					}
 				});
-			}
-			catch (IOException e) {
+			} catch (IOException e) {
 				this.clientChannel.close();
 				throw new RuntimeException(
 						"Connect to address=" + targetAddress + " failed message: " + e.getMessage());
 			}
+
 			startOutboundProcessing();
+
 		}).subscribeOn(Schedulers.boundedElastic());
 	}
 
+	/**
+	 * Sets the handler for processing transport-level errors.
+	 *
+	 * <p>
+	 * The provided handler will be called when errors occur during transport
+	 * operations, such as connection failures or protocol violations.
+	 * </p>
+	 * 
+	 * @param errorHandler a consumer that processes error messages
+	 */
+	public void setStdErrorHandler(Consumer<String> errorHandler) {
+		this.stdErrorHandler = errorHandler;
+	}
+
 	private void handleIncomingMessages(Function<Mono<JSONRPCMessage>, Mono<JSONRPCMessage>> inboundMessageHandler) {
-		this.inboundSink.asFlux()
-			.flatMap(message -> Mono.just(message)
-				.transform(inboundMessageHandler)
-				.contextWrite(ctx -> ctx.put("observation", "myObservation")))
-			.subscribe();
+		this.inboundSink.asFlux().flatMap(message -> Mono.just(message).transform(inboundMessageHandler)
+				.contextWrite(ctx -> ctx.put("observation", "myObservation"))).subscribe();
+	}
+
+	private void handleIncomingErrors() {
+		this.errorSink.asFlux().subscribe(e -> {
+			this.stdErrorHandler.accept(e);
+		});
 	}
 
 	@Override
 	public Mono<Void> sendMessage(JSONRPCMessage message) {
-		if (this.outboundSink.tryEmitNext(message).isSuccess()) {
-			// TODO: essentially we could reschedule ourselves in some time and make
-			// another attempt with the already read data but pause reading until
-			// success
-			// In this approach we delegate the retry and the backpressure onto the
-			// caller. This might be enough for most cases.
-			return Mono.empty();
-		}
-		else {
-			return Mono.error(new RuntimeException("Failed to enqueue message"));
-		}
+		outboundSink.emitNext(message, (signalType, emitResult) -> {
+			// Allow retry
+			return true;
+		});
+		return Mono.empty();
 	}
 
+	/**
+	 * Starts the outbound processing thread that writes JSON-RPC messages to the
+	 * process's output stream. Messages are serialized to JSON and written with a
+	 * newline delimiter.
+	 */
 	private void startOutboundProcessing() {
 		this.handleOutbound(messages -> messages
-			// this bit is important since writes come from user threads, and we
-			// want to ensure that the actual writing happens on a dedicated thread
-			.publishOn(outboundScheduler)
-			.handle((message, s) -> {
-				if (message != null && !isClosing) {
-					try {
-						this.clientChannel.writeMessageBlocking(objectMapper.writeValueAsString(message));
-						s.next(message);
+				// this bit is important since writes come from user threads, and we
+				// want to ensure that the actual writing happens on a dedicated thread
+				.publishOn(outboundScheduler).handle((message, sink) -> {
+					if (message != null && !isClosing) {
+						try {
+							clientChannel.writeMessage(objectMapper.writeValueAsString(message));
+							sink.next(message);
+						} catch (IOException e) {
+							if (!isClosing) {
+								logger.error("Error writing message", e);
+								sink.error(new RuntimeException(e));
+							} else {
+								logger.debug("Stream closed during shutdown", e);
+							}
+						}
 					}
-					catch (IOException e) {
-						s.error(new RuntimeException(e));
-					}
-				}
-			}));
+				}));
 	}
 
 	protected void handleOutbound(Function<Flux<JSONRPCMessage>, Flux<JSONRPCMessage>> outboundConsumer) {
@@ -140,9 +217,10 @@ public class UDSClientTransportProvider implements McpClientTransport {
 	}
 
 	/**
-	 * Gracefully closes the transport by destroying the process and disposing of the
-	 * schedulers. This method sends a TERM signal to the process and waits for it to exit
-	 * before cleaning up resources.
+	 * Gracefully closes the transport by destroying the process and disposing of
+	 * the schedulers. This method sends a TERM signal to the process and waits for
+	 * it to exit before cleaning up resources.
+	 * 
 	 * @return A Mono that completes when the transport is closed
 	 */
 	@Override
@@ -154,27 +232,22 @@ public class UDSClientTransportProvider implements McpClientTransport {
 			// First complete all sinks to stop accepting new messages
 			inboundSink.tryEmitComplete();
 			outboundSink.tryEmitComplete();
+			errorSink.tryEmitComplete();
+
 			// Give a short time for any pending messages to be processed
 			return Mono.delay(Duration.ofMillis(100)).then();
-		})).then(Mono.defer(() -> {
-			// Close our clientChannel
-			if (this.clientChannel != null) {
-				this.clientChannel.close();
-				this.clientChannel = null;
-			}
-			return Mono.empty();
 		})).then(Mono.fromRunnable(() -> {
 			try {
-				// The Threads are blocked on readLine so disposeGracefully would not
-				// interrupt them, therefore we issue an async hard dispose.
 				outboundScheduler.dispose();
-
 				logger.debug("Graceful shutdown completed");
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				logger.error("Error during graceful shutdown", e);
 			}
 		})).then().subscribeOn(Schedulers.boundedElastic());
+	}
+
+	public Sinks.Many<String> getErrorSink() {
+		return this.errorSink;
 	}
 
 	@Override

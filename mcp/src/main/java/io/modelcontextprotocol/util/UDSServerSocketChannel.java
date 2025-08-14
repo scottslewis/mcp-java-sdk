@@ -7,21 +7,21 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ExecutorService;
 
-public class UDSServerNonBlockingSocketChannel extends ServerNonBlockingSocketChannel {
+public class UDSServerSocketChannel extends ServSocketChannel {
 
-	public UDSServerNonBlockingSocketChannel() throws IOException {
+	public UDSServerSocketChannel() throws IOException {
 		super();
 	}
 
-	public UDSServerNonBlockingSocketChannel(Selector selector, int incomingBufferSize, ExecutorService executor) {
+	public UDSServerSocketChannel(Selector selector, int incomingBufferSize, ExecutorService executor) {
 		super(selector, incomingBufferSize, executor);
 	}
 
-	public UDSServerNonBlockingSocketChannel(Selector selector, int incomingBufferSize) {
+	public UDSServerSocketChannel(Selector selector, int incomingBufferSize) {
 		super(selector, incomingBufferSize);
 	}
 
-	public UDSServerNonBlockingSocketChannel(Selector selector) {
+	public UDSServerSocketChannel(Selector selector) {
 		super(selector);
 	}
 

@@ -2,6 +2,8 @@ package io.modelcontextprotocol.server.transport;
 
 import java.io.IOException;
 import java.net.UnixDomainSocketAddress;
+import java.nio.channels.SelectionKey;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -18,8 +20,9 @@ import io.modelcontextprotocol.spec.McpSchema.JSONRPCMessage;
 import io.modelcontextprotocol.spec.McpServerSession;
 import io.modelcontextprotocol.spec.McpServerTransport;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
+import io.modelcontextprotocol.spec.ProtocolVersions;
 import io.modelcontextprotocol.util.Assert;
-import io.modelcontextprotocol.util.UDSServerNonBlockingSocketChannel;
+import io.modelcontextprotocol.util.UDSServerSocketChannel;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -28,9 +31,11 @@ import reactor.core.scheduler.Schedulers;
 
 public class UDSServerTransportProvider implements McpServerTransportProvider {
 
-	private static final Logger logger = LoggerFactory.getLogger(UDSServerTransportProvider.class);
+	private static final Logger logger = LoggerFactory.getLogger(StdioServerTransportProvider.class);
 
 	private final ObjectMapper objectMapper;
+
+	private UDSMcpSessionTransport transport;
 
 	private McpServerSession session;
 
@@ -38,58 +43,42 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 
 	private final Sinks.One<Void> inboundReady = Sinks.one();
 
-	private UDSServerNonBlockingSocketChannel serverSocketChannel;
+	private final Sinks.One<Void> outboundReady = Sinks.one();
 
-	private UnixDomainSocketAddress address;
+	private UnixDomainSocketAddress targetAddress;
 
-	private UDSMcpSessionTransport transport;
-
+	/**
+	 * Creates a new UDSServerTransportProvider with a default ObjectMapper
+	 * 
+	 * @param unixSocketAddress the UDS socket address to bind to. Must not be null.
+	 */
 	public UDSServerTransportProvider(UnixDomainSocketAddress unixSocketAddress) {
 		this(new ObjectMapper(), unixSocketAddress);
 	}
 
+	/**
+	 * Creates a new UDSServerTransportProvider with the specified ObjectMapper
+	 * 
+	 * @param objectMapper The ObjectMapper to use for JSON
+	 *                     serialization/deserialization
+	 */
 	public UDSServerTransportProvider(ObjectMapper objectMapper, UnixDomainSocketAddress unixSocketAddress) {
-		Assert.notNull(objectMapper, "The ObjectMapper can not be null");
+		Assert.notNull(objectMapper, "objectMapper cannot be null");
 		this.objectMapper = objectMapper;
-		this.address = unixSocketAddress;
+		Assert.notNull(unixSocketAddress, "unixSocketAddress cannot be null");
+		this.targetAddress = unixSocketAddress;
+	}
+
+	@Override
+	public List<String> protocolVersions() {
+		return List.of(ProtocolVersions.MCP_2024_11_05);
 	}
 
 	@Override
 	public void setSessionFactory(McpServerSession.Factory sessionFactory) {
 		this.transport = new UDSMcpSessionTransport();
 		this.session = sessionFactory.create(transport);
-		this.transport.handleIncomingMessages();
-		if (this.transport.isStarted.compareAndSet(false, true)) {
-			inboundReady.tryEmitValue(null);
-		}
-		// Also start listening for accept
-		try {
-			this.serverSocketChannel = new UDSServerNonBlockingSocketChannel();
-			this.serverSocketChannel.start(this.address, (clientChannel) -> {
-				if (logger.isDebugEnabled()) {
-					logger.debug("Accepted connect from clientChannel=" + clientChannel);
-				}
-				// Start outbound processing now that the clientChannel has been accepted
-				this.transport.startOutboundProcessing();
-			}, (dataLine) -> {
-				String message = (String) dataLine;
-				if (logger.isDebugEnabled()) {
-					logger.debug("Received message line=" + message);
-				}
-				try {
-					this.transport
-						.handleMessage(McpSchema.deserializeJsonRpcMessage(this.objectMapper, message.trim()));
-				}
-				catch (IOException e) {
-					this.serverSocketChannel.close();
-				}
-			});
-		}
-		catch (IOException e) {
-			// If this happens then we are doomed
-			this.serverSocketChannel.close();
-			throw new RuntimeException("accepterNonBlockSocketChannel could not be started");
-		}
+		this.transport.initProcessing();
 	}
 
 	@Override
@@ -98,7 +87,7 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 			return Mono.error(new McpError("No session to close"));
 		}
 		return this.session.sendNotification(method, params)
-			.doOnError(e -> logger.error("Failed to send notification: {}", e.getMessage()));
+				.doOnError(e -> logger.error("Failed to send notification: {}", e.getMessage()));
 	}
 
 	@Override
@@ -110,7 +99,7 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 	}
 
 	/**
-	 * Implementation of McpServerTransport for the stdio session.
+	 * Implementation of McpServerTransport for the uds session.
 	 */
 	private class UDSMcpSessionTransport implements McpServerTransport {
 
@@ -118,44 +107,43 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 
 		private final Sinks.Many<JSONRPCMessage> outboundSink;
 
-		private final AtomicBoolean isStarted = new AtomicBoolean(false);
-
 		/** Scheduler for handling outbound messages */
 		private Scheduler outboundScheduler;
 
-		private final Sinks.One<Void> outboundReady = Sinks.one();
+		private final AtomicBoolean isStarted = new AtomicBoolean(false);
+
+		private final UDSServerSocketChannel serverSocketChannel;
 
 		public UDSMcpSessionTransport() {
-
 			this.inboundSink = Sinks.many().unicast().onBackpressureBuffer();
 			this.outboundSink = Sinks.many().unicast().onBackpressureBuffer();
-
 			this.outboundScheduler = Schedulers.fromExecutorService(Executors.newSingleThreadExecutor(),
 					"uds-outbound");
-		}
-
-		public void handleMessage(McpSchema.JSONRPCMessage json) throws IOException {
 			try {
-				if (!this.inboundSink.tryEmitNext(json).isSuccess()) {
-					throw new Exception("Failed to enqueue message");
-				}
-			}
-			catch (Exception e) {
-				logIfNotClosing("Error processing inbound message", e);
-				throw new IOException("Error in processing inbound message", e);
+				this.serverSocketChannel = new UDSServerSocketChannel() {
+					@Override
+					protected void handleException(SelectionKey key, Exception e) {
+						isClosing.set(true);
+						if (session != null) {
+							session.close();
+							session = null;
+						}
+						inboundSink.tryEmitComplete();
+					}
+				};
+			} catch (IOException e) {
+				throw new RuntimeException(e);
 			}
 		}
 
 		@Override
 		public Mono<Void> sendMessage(McpSchema.JSONRPCMessage message) {
-
 			return Mono.zip(inboundReady.asMono(), outboundReady.asMono()).then(Mono.defer(() -> {
-				if (outboundSink.tryEmitNext(message).isSuccess()) {
-					return Mono.empty();
-				}
-				else {
-					return Mono.error(new RuntimeException("Failed to enqueue message"));
-				}
+				outboundSink.emitNext(message, (signalType, emitResult) -> {
+					// Allow retry
+					return true;
+				});
+				return Mono.empty();
 			}));
 		}
 
@@ -179,17 +167,52 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 			logger.debug("Session transport closed");
 		}
 
+		private void initProcessing() {
+			handleIncomingMessages();
+			startInboundProcessing();
+			startOutboundProcessing();
+
+			inboundReady.tryEmitValue(null);
+			outboundReady.tryEmitValue(null);
+		}
+
 		private void handleIncomingMessages() {
 			this.inboundSink.asFlux().flatMap(message -> session.handle(message)).doOnTerminate(() -> {
-				// The outbound processing will dispose its scheduler upon completion
 				this.outboundSink.tryEmitComplete();
-				// this.inboundScheduler.dispose();
 			}).subscribe();
 		}
 
 		/**
-		 * Starts the outbound processing thread that writes JSON-RPC messages to stdout.
-		 * Messages are serialized to JSON and written with a newline delimiter.
+		 * Starts the inbound processing thread that reads JSON-RPC messages from stdin.
+		 * Messages are deserialized and passed to the session for handling.
+		 */
+		private void startInboundProcessing() {
+			if (isStarted.compareAndSet(false, true)) {
+				try {
+					this.serverSocketChannel.start(targetAddress, (clientChannel) -> {
+						if (logger.isDebugEnabled()) {
+							logger.debug("Accepted connect from clientChannel=" + clientChannel);
+						}
+					}, (message) -> {
+						if (logger.isDebugEnabled()) {
+							logger.debug("Received message=" + message);
+						}
+						// Incoming messages processed right here
+						McpSchema.JSONRPCMessage jsonMessage = McpSchema.deserializeJsonRpcMessage(objectMapper,
+								message);
+						if (!this.inboundSink.tryEmitNext(jsonMessage).isSuccess()) {
+							throw new IOException("Error adding jsonMessge to inboundSink");
+						}
+					});
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+
+		/**
+		 * Starts the outbound processing thread that writes JSON-RPC messages to
+		 * stdout. Messages are serialized to JSON and written with a newline delimiter.
 		 */
 		private void startOutboundProcessing() {
 			Function<Flux<JSONRPCMessage>, Flux<JSONRPCMessage>> outboundConsumer = messages -> messages // @formatter:off
@@ -198,7 +221,7 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 				 .handle((message, sink) -> {
 					 if (message != null && !isClosing.get()) {
 						 try {
-							 serverSocketChannel.writeMessageBlocking(objectMapper.writeValueAsString(message));
+							 serverSocketChannel.writeMessage(objectMapper.writeValueAsString(message));
 							 sink.next(message);
 						 }
 						 catch (IOException e) {
@@ -230,12 +253,6 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 	
 				 outboundConsumer.apply(outboundSink.asFlux()).subscribe();
 		 } // @formatter:on
-
-		private void logIfNotClosing(String message, Exception e) {
-			if (!isClosing.get()) {
-				logger.error(message, e);
-			}
-		}
 
 	}
 
