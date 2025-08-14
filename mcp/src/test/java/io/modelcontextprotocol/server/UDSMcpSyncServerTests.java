@@ -12,11 +12,11 @@ import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Timeout;
 
-import io.modelcontextprotocol.server.transport.UDSServerTransportProvider;
+import io.modelcontextprotocol.server.transport.UdsMcpServerTransportProviderImpl;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 
 /**
- * Tests for {@link McpSyncServer} using {@link UDSServerTransportProvider}.
+ * Tests for {@link McpSyncServer} using {@link UdsMcpServerTransportProviderImpl}.
  *
  * @author Christian Tzolov
  * @author Scott Lewis
@@ -47,7 +47,7 @@ class UDSMcpSyncServerTests extends AbstractMcpSyncServerTests {
 	}
 
 	protected McpServerTransportProvider createMcpTransportProvider() {
-		return new UDSServerTransportProvider(UnixDomainSocketAddress.of(socketPath));
+		return new UdsMcpServerTransportProviderImpl(UnixDomainSocketAddress.of(socketPath));
 	}
 
 	@Override

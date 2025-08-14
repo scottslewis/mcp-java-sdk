@@ -12,7 +12,7 @@ import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Timeout;
 
-import io.modelcontextprotocol.server.transport.UDSServerTransportProvider;
+import io.modelcontextprotocol.server.transport.UdsMcpServerTransportProviderImpl;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 
 /**
@@ -29,16 +29,15 @@ class UDSMcpAsyncServerTests extends AbstractMcpAsyncServerTests {
 	private void deleteSocketPath() {
 		try {
 			Files.deleteIfExists(socketPath);
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
-
 	protected void onStart() {
 		super.onStart();
 		deleteSocketPath();
 	}
+
 
 	@Override
 	protected void onClose() {
@@ -47,7 +46,7 @@ class UDSMcpAsyncServerTests extends AbstractMcpAsyncServerTests {
 	}
 
 	protected McpServerTransportProvider createMcpTransportProvider() {
-		return new UDSServerTransportProvider(UnixDomainSocketAddress.of(socketPath));
+		return new UdsMcpServerTransportProviderImpl(UnixDomainSocketAddress.of(socketPath));
 	}
 
 	@Override

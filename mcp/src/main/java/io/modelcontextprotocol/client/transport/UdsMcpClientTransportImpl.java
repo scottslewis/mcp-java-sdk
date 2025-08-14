@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.JSONRPCMessage;
 import io.modelcontextprotocol.util.Assert;
@@ -25,9 +24,9 @@ import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
-public class UDSClientTransportProvider implements McpClientTransport {
+public class UdsMcpClientTransportImpl implements UdsMcpClientTransport {
 
-	private static final Logger logger = LoggerFactory.getLogger(UDSClientTransportProvider.class);
+	private static final Logger logger = LoggerFactory.getLogger(UdsMcpClientTransportImpl.class);
 
 	private final Sinks.Many<JSONRPCMessage> inboundSink;
 
@@ -49,11 +48,15 @@ public class UDSClientTransportProvider implements McpClientTransport {
 	// visible for tests
 	private Consumer<String> stdErrorHandler = error -> logger.info("STDERR Message received: {}", error);
 
-	public UDSClientTransportProvider(UnixDomainSocketAddress targetAddress) {
+	public UnixDomainSocketAddress getUdsAddress() {
+		return this.targetAddress;
+	}
+	
+	public UdsMcpClientTransportImpl(UnixDomainSocketAddress targetAddress) {
 		this(new ObjectMapper(), targetAddress);
 	}
 
-	public UDSClientTransportProvider(ObjectMapper objectMapper, UnixDomainSocketAddress targetAddress) {
+	public UdsMcpClientTransportImpl(ObjectMapper objectMapper, UnixDomainSocketAddress targetAddress) {
 		Assert.notNull(objectMapper, "objectMapper cannot be null");
 		this.objectMapper = objectMapper;
 		Assert.notNull(objectMapper, "targetAddress cannot be null");
@@ -93,7 +96,7 @@ public class UDSClientTransportProvider implements McpClientTransport {
 			try {
 				this.clientChannel.connect(targetAddress, (client) -> {
 					if (logger.isInfoEnabled()) {
-						logger.info("UDSClientTransportProvider CONNECTED to targetAddress=" + targetAddress);
+						logger.info("UdsMcpClientTransportImpl CONNECTED to targetAddress=" + targetAddress);
 					}
 				}, (message) -> {
 					if (logger.isDebugEnabled()) {

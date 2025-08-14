@@ -18,7 +18,6 @@ import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.JSONRPCMessage;
 import io.modelcontextprotocol.spec.McpServerSession;
 import io.modelcontextprotocol.spec.McpServerTransport;
-import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import io.modelcontextprotocol.spec.ProtocolVersions;
 import io.modelcontextprotocol.util.Assert;
 import io.modelcontextprotocol.util.UDSServerSocketChannel;
@@ -28,9 +27,9 @@ import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
-public class UDSServerTransportProvider implements McpServerTransportProvider {
+public class UdsMcpServerTransportProviderImpl implements UdsMcpServerTransportProvider {
 
-	private static final Logger logger = LoggerFactory.getLogger(UDSServerTransportProvider.class);
+	private static final Logger logger = LoggerFactory.getLogger(UdsMcpServerTransportProviderImpl.class);
 
 	private final ObjectMapper objectMapper;
 
@@ -46,19 +45,23 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 
 	private UnixDomainSocketAddress targetAddress;
 
+	public UnixDomainSocketAddress getUdsAddress() {
+		return targetAddress;
+	}
+	
 	/**
-	 * Creates a new UDSServerTransportProvider with a default ObjectMapper
+	 * Creates a new UdsMcpServerTransportProviderImpl with a default ObjectMapper
 	 * @param unixSocketAddress the UDS socket address to bind to. Must not be null.
 	 */
-	public UDSServerTransportProvider(UnixDomainSocketAddress unixSocketAddress) {
+	public UdsMcpServerTransportProviderImpl(UnixDomainSocketAddress unixSocketAddress) {
 		this(new ObjectMapper(), unixSocketAddress);
 	}
 
 	/**
-	 * Creates a new UDSServerTransportProvider with the specified ObjectMapper
+	 * Creates a new UdsMcpServerTransportProviderImpl with the specified ObjectMapper
 	 * @param objectMapper The ObjectMapper to use for JSON serialization/deserialization
 	 */
-	public UDSServerTransportProvider(ObjectMapper objectMapper, UnixDomainSocketAddress unixSocketAddress) {
+	public UdsMcpServerTransportProviderImpl(ObjectMapper objectMapper, UnixDomainSocketAddress unixSocketAddress) {
 		Assert.notNull(objectMapper, "objectMapper cannot be null");
 		this.objectMapper = objectMapper;
 		Assert.notNull(unixSocketAddress, "unixSocketAddress cannot be null");

@@ -12,9 +12,9 @@ import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Timeout;
 
-import io.modelcontextprotocol.client.transport.UDSClientTransportProvider;
+import io.modelcontextprotocol.client.transport.UdsMcpClientTransportImpl;
 import io.modelcontextprotocol.server.TestEverythingServer;
-import io.modelcontextprotocol.server.transport.UDSServerTransportProvider;
+import io.modelcontextprotocol.server.transport.UdsMcpServerTransportProviderImpl;
 import io.modelcontextprotocol.spec.McpClientTransport;
 
 /**
@@ -41,7 +41,7 @@ class UDSMcpAsyncClientTests extends AbstractMcpAsyncClientTests {
 	protected void onStart() {
 		super.onStart();
 		deleteSocketPath();
-		this.server = new TestEverythingServer(new UDSServerTransportProvider(UnixDomainSocketAddress.of(socketPath)));
+		this.server = new TestEverythingServer(new UdsMcpServerTransportProviderImpl(UnixDomainSocketAddress.of(socketPath)));
 	}
 
 	@Override
@@ -58,7 +58,7 @@ class UDSMcpAsyncClientTests extends AbstractMcpAsyncClientTests {
 
 	@Override
 	protected McpClientTransport createMcpTransport() {
-		return new UDSClientTransportProvider(UnixDomainSocketAddress.of(socketPath));
+		return new UdsMcpClientTransportImpl(UnixDomainSocketAddress.of(socketPath));
 	}
 
 }
