@@ -106,7 +106,7 @@ public abstract class AbstractSocketChannel {
 			try {
 				while (true) {
 					int count = this.selector.select();
-					debug("Select returned count=%s", count);
+					debug("select returned count={}", count);
 					Set<SelectionKey> selectedKeys = selector.selectedKeys();
 					Iterator<SelectionKey> iter = selectedKeys.iterator();
 					while (iter.hasNext()) {
@@ -151,12 +151,12 @@ public abstract class AbstractSocketChannel {
 	// For client subclasses
 	protected void handleConnectable(SelectionKey key, IOConsumer<SocketChannel> connectHandler) throws IOException {
 		SocketChannel client = (SocketChannel) key.channel();
-		debug("client=%s", client);
+		debug("client={}", client);
 		client.configureBlocking(false);
 		client.register(this.selector, SelectionKey.OP_READ, new AttachedIO());
 		if (client.isConnectionPending()) {
 			client.finishConnect();
-			debug("connected client=%s", client);
+			debug("connected client={}", client);
 		}
 		if (connectHandler != null) {
 			connectHandler.apply(client);
@@ -166,13 +166,13 @@ public abstract class AbstractSocketChannel {
 	protected void handleAcceptable(SelectionKey key, IOConsumer<SocketChannel> acceptHandler) throws IOException {
 		ServerSocketChannel serverSocket = (ServerSocketChannel) key.channel();
 		SocketChannel client = serverSocket.accept();
-		debug("client=%s", client);
+		debug("client={}", client);
 		client.configureBlocking(false);
 		client.register(this.selector, SelectionKey.OP_READ, new AttachedIO());
 		configureAcceptSocketChannel(client);
 		if (client.isConnectionPending()) {
 			client.finishConnect();
-			debug("accepted client=%s", client);
+			debug("accepted client={}", client);
 		}
 		if (acceptHandler != null) {
 			acceptHandler.apply(client);
@@ -194,7 +194,7 @@ public abstract class AbstractSocketChannel {
 	protected void handleReadable(SelectionKey key, IOConsumer<String> readHandler) throws IOException {
 		SocketChannel client = (SocketChannel) key.channel();
 		AttachedIO io = getAttachedIO(key);
-		debug("read client=%s", client);
+		debug("read client={}", client);
 		// read
 		int r = client.read(this.inBuffer);
 		// Check if we should expect any more reads
@@ -212,7 +212,7 @@ public abstract class AbstractSocketChannel {
 			String message = sb.toString();
 			// Set the io.reading value to null as we are done with this message
 			io.reading = null;
-			debug("read client=%s msg=", client, message);
+			debug("read client={} msg=", client, message);
 			if (readHandler != null) {
 				String[] messages = splitMessage(message);
 				for (int i = 0; i < messages.length; i++) {
@@ -222,7 +222,7 @@ public abstract class AbstractSocketChannel {
 		}
 		else {
 			io.reading = sb;
-			debug("read partial=%s", partial);
+			debug("read partial={}", partial);
 		}
 		// Clear inbuffer for next read
 		this.inBuffer.clear();
@@ -253,13 +253,13 @@ public abstract class AbstractSocketChannel {
 		synchronized (writeLock) {
 			int written = client.write(buf);
 			if (buf.hasRemaining()) {
-				debug("doWrite written=%s, remaining=%s", written, buf.remaining());
+				debug("doWrite written={}, remaining={}", written, buf.remaining());
 				io.writing = buf.slice();
 				key.interestOpsOr(SelectionKey.OP_WRITE);
 			}
 			else {
 				if (logger.isDebugEnabled()) {
-					logger.debug("doWrite message=%s", new String(buf.array(), 0, written));
+					logger.debug("doWrite message={}", new String(buf.array(), 0, written));
 				}
 				io.writing = null;
 				key.interestOps(SelectionKey.OP_READ);
@@ -287,7 +287,7 @@ public abstract class AbstractSocketChannel {
 
 	protected void hardCloseClient(SocketChannel client, IOConsumer<SocketChannel> closeHandler) {
 		if (client != null) {
-			debug("hardClose client=%s", client);
+			debug("hardClose client={}", client);
 			synchronized (writeLock) {
 				try {
 					if (closeHandler != null) {
@@ -314,7 +314,7 @@ public abstract class AbstractSocketChannel {
 			.replace("\r", "\\n")
 			// add message delimiter
 			.concat(DEFAULT_MESSAGE_DELIMITER);
-		debug("writing msg=%s", outputMessage);
+		debug("writing msg={}", outputMessage);
 		synchronized (writeLock) {
 			// do the non blocking write in thread while holding lock.
 			doWrite(client, outputMessage, null);
@@ -329,7 +329,7 @@ public abstract class AbstractSocketChannel {
 				}
 				// If write is *not* completed, then wait timeout /10
 				try {
-					debug("writeBlocking WAITING(ms)=%s msg=%s", String.valueOf(waitTime / 10), outputMessage);
+					debug("writeBlocking WAITING(ms)={} msg={}", String.valueOf(waitTime / 10), outputMessage);
 					writeLock.wait(waitTime / 10);
 				}
 				catch (InterruptedException e) {
@@ -340,7 +340,7 @@ public abstract class AbstractSocketChannel {
 				throw new IOException("Write not completed.  Non empty buffer remaining after timeout");
 			}
 		}
-		debug("writing done msg=%s", outputMessage);
+		debug("writing done msg={}", outputMessage);
 	}
 
 	protected void configureConnectSocketChannel(SocketChannel client, SocketAddress connectAddress)

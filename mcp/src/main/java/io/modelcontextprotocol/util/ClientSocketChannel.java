@@ -37,7 +37,7 @@ public class ClientSocketChannel extends AbstractSocketChannel {
 
 	protected SocketChannel doConnect(SocketChannel client, SocketAddress address,
 			IOConsumer<SocketChannel> connectHandler, IOConsumer<String> readHandler) throws IOException {
-		debug("connect targetAddress=%s", address);
+		debug("connect targetAddress={}", address);
 		client.configureBlocking(false);
 		client.register(selector, SelectionKey.OP_CONNECT);
 		configureConnectSocketChannel(client, address);
@@ -54,7 +54,7 @@ public class ClientSocketChannel extends AbstractSocketChannel {
 
 		client.connect(address);
 		try {
-			debug("connect targetAddress=%s", address);
+			debug("connect targetAddress={}", address);
 			synchronized (connectLock) {
 				connectLock.wait(this.connectTimeout);
 			}
@@ -63,7 +63,7 @@ public class ClientSocketChannel extends AbstractSocketChannel {
 			throw new IOException(
 					"Connect to address=" + address + " timed out after " + String.valueOf(this.connectTimeout) + "ms");
 		}
-		debug("connected client=%s", client);
+		debug("connected client={}", client);
 		return client;
 	}
 

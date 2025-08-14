@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.JSONRPCMessage;
 import io.modelcontextprotocol.spec.McpServerSession;
@@ -31,7 +30,7 @@ import reactor.core.scheduler.Schedulers;
 
 public class UDSServerTransportProvider implements McpServerTransportProvider {
 
-	private static final Logger logger = LoggerFactory.getLogger(StdioServerTransportProvider.class);
+	private static final Logger logger = LoggerFactory.getLogger(UDSServerTransportProvider.class);
 
 	private final ObjectMapper objectMapper;
 
@@ -81,7 +80,7 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 	@Override
 	public Mono<Void> notifyClients(String method, Object params) {
 		if (this.session == null) {
-			return Mono.error(new McpError("No session to close"));
+			return Mono.error(new Exception("No session to close"));
 		}
 		return this.session.sendNotification(method, params)
 			.doOnError(e -> logger.error("Failed to send notification: {}", e.getMessage()));

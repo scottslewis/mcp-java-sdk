@@ -27,7 +27,7 @@ import reactor.core.scheduler.Schedulers;
 
 public class UDSClientTransportProvider implements McpClientTransport {
 
-	private static final Logger logger = LoggerFactory.getLogger(StdioClientTransport.class);
+	private static final Logger logger = LoggerFactory.getLogger(UDSClientTransportProvider.class);
 
 	private final Sinks.Many<JSONRPCMessage> inboundSink;
 
@@ -221,6 +221,10 @@ public class UDSClientTransportProvider implements McpClientTransport {
 		})).then(Mono.fromRunnable(() -> {
 			try {
 				outboundScheduler.dispose();
+				if (this.clientChannel != null) {
+					this.clientChannel.close();
+					this.clientChannel = null;
+				}
 				logger.debug("Graceful shutdown completed");
 			}
 			catch (Exception e) {
