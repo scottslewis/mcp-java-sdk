@@ -7,5 +7,5 @@ import io.modelcontextprotocol.spec.McpServerTransportProvider;
 public interface UdsMcpServerTransportProvider extends McpServerTransportProvider {
 
 	UnixDomainSocketAddress getUdsAddress();
-	
+
 }

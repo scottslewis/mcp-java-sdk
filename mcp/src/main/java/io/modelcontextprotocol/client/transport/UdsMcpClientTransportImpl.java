@@ -51,7 +51,7 @@ public class UdsMcpClientTransportImpl implements UdsMcpClientTransport {
 	public UnixDomainSocketAddress getUdsAddress() {
 		return this.targetAddress;
 	}
-	
+
 	public UdsMcpClientTransportImpl(UnixDomainSocketAddress targetAddress) {
 		this(new ObjectMapper(), targetAddress);
 	}

@@ -48,7 +48,7 @@ public class UdsMcpServerTransportProviderImpl implements UdsMcpServerTransportP
 	public UnixDomainSocketAddress getUdsAddress() {
 		return targetAddress;
 	}
-	
+
 	/**
 	 * Creates a new UdsMcpServerTransportProviderImpl with a default ObjectMapper
 	 * @param unixSocketAddress the UDS socket address to bind to. Must not be null.

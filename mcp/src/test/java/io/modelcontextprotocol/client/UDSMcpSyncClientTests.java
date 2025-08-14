@@ -42,7 +42,8 @@ class UDSMcpSyncClientTests extends AbstractMcpSyncClientTests {
 	protected void onStart() {
 		super.onStart();
 		deleteSocketPath();
-		this.server = new TestEverythingServer(new UdsMcpServerTransportProviderImpl(UnixDomainSocketAddress.of(socketPath)));
+		this.server = new TestEverythingServer(
+				new UdsMcpServerTransportProviderImpl(UnixDomainSocketAddress.of(socketPath)));
 	}
 
 	@Override
