@@ -59,7 +59,7 @@ public class ServSocketChannel extends AbstractSocketChannel {
 	}
 
 	@Override
-	protected void handleException(SelectionKey key, Exception e) {
+	protected void handleException(SelectionKey key, Throwable e) {
 		if (logger.isDebugEnabled()) {
 			logger.debug("handleException", e);
 		}

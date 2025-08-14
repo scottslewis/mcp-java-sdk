@@ -64,7 +64,7 @@ public class UDSClientTransportProvider implements McpClientTransport {
 		try {
 			this.clientChannel = new UDSClientSocketChannel() {
 				@Override
-				protected void handleException(SelectionKey key, Exception e) {
+				protected void handleException(SelectionKey key, Throwable e) {
 					isClosing = true;
 					super.handleException(key, e);
 				}

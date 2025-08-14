@@ -118,7 +118,7 @@ public class UDSServerTransportProvider implements McpServerTransportProvider {
 			try {
 				this.serverSocketChannel = new UDSServerSocketChannel() {
 					@Override
-					protected void handleException(SelectionKey key, Exception e) {
+					protected void handleException(SelectionKey key, Throwable e) {
 						isClosing.set(true);
 						if (session != null) {
 							session.close();

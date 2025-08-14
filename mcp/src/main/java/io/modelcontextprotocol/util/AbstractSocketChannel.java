@@ -127,7 +127,7 @@ public abstract class AbstractSocketChannel {
 					}
 				}
 			}
-			catch (Exception e) {
+			catch (Throwable e) {
 				handleException(key, e);
 			}
 		};
@@ -135,7 +135,7 @@ public abstract class AbstractSocketChannel {
 
 	public abstract void close();
 
-	protected abstract void handleException(SelectionKey key, Exception e);
+	protected abstract void handleException(SelectionKey key, Throwable e);
 
 	protected void start(IOConsumer<SocketChannel> acceptHandler, IOConsumer<SocketChannel> connectHandler,
 			IOConsumer<String> readHandler) throws IOException {
