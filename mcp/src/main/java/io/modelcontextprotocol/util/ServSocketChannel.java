@@ -72,7 +72,10 @@ public class ServSocketChannel extends AbstractSocketChannel {
 			writeMessageToChannel(c, message);
 		}
 		else {
-			throw new IOException("not connected");
+			if (logger.isDebugEnabled()) {
+				logger.debug("No connected client to send message={}", message);
+			}
+			;
 		}
 	}
 
