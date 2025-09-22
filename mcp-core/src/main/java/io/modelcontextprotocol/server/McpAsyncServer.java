@@ -92,7 +92,7 @@ import static io.modelcontextprotocol.spec.McpError.RESOURCE_NOT_FOUND;
  * @see McpSchema
  * @see McpClientSession
  */
-public class McpAsyncServer {
+public class McpAsyncServer extends AbstractMcpAsyncServer {
 
 	private static final Logger logger = LoggerFactory.getLogger(McpAsyncServer.class);
 
