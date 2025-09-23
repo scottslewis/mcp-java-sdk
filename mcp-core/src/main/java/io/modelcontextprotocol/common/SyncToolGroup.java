@@ -3,13 +3,14 @@ package io.modelcontextprotocol.common;
 import java.util.List;
 
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
+import io.modelcontextprotocol.spec.McpSchema.ToolGroup;
 
-public class SyncToolGroup extends ToolGroup {
+public class SyncToolGroup extends AbstractToolGroup {
 
 	private final List<SyncToolSpecification> specifications;
 
-	public SyncToolGroup(ToolGroupName name, String description, List<SyncToolSpecification> specifications) {
-		super(name, description);
+	public SyncToolGroup(ToolGroup toolGroup, String description, List<SyncToolSpecification> specifications) {
+		super(toolGroup);
 		this.specifications = specifications;
 	}
 

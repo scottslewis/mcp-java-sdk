@@ -20,8 +20,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 
-import io.modelcontextprotocol.common.ToolGroupName;
-import io.modelcontextprotocol.common.ToolGroupNameSegment;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.TypeRef;
 
@@ -1296,7 +1294,7 @@ public final class McpSchema {
 	@JsonInclude(JsonInclude.Include.NON_ABSENT)
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public record ToolGroup( // @formatter:off
-		@JsonProperty("name") ToolGroupName groupName,
+		@JsonProperty("name") ToolGroupName name,
 		@JsonProperty("title") String title,
 		@JsonProperty("description") String description) { // @formatter:on
 	}

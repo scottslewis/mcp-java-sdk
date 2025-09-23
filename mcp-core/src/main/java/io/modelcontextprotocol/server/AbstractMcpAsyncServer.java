@@ -15,6 +15,8 @@ import io.modelcontextprotocol.server.McpServerFeatures.AsyncToolSpecification;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
+import io.modelcontextprotocol.spec.McpSchema.ToolGroup;
+import io.modelcontextprotocol.spec.McpSchema.ToolGroupName;
 
 public abstract class AbstractMcpAsyncServer {
 
@@ -23,14 +25,14 @@ public abstract class AbstractMcpAsyncServer {
 	private final List<AsyncToolGroup> toolGroups = Collections
 			.synchronizedList(new CopyOnWriteArrayList<AsyncToolGroup>());
 
-	Mono<Void> addToolGroup(AsyncToolGroup toolGroup) {
+	Mono<Void> addToolGroup(AsyncToolGroup asyncToolGroup) {
 		return Mono.defer(() -> {
-			return addOrRemoveToolGroup(toolGroup, true);
+			return addOrRemoveToolGroup(asyncToolGroup, true);
 		});
 	}
 
-	protected Mono<Void> addOrRemoveToolGroup(AsyncToolGroup toolGroup, boolean add) {
-		List<AsyncToolSpecification> specifications = toolGroup.getSpecifications();
+	protected Mono<Void> addOrRemoveToolGroup(AsyncToolGroup asyncToolGroup, boolean add) {
+		List<AsyncToolSpecification> specifications = asyncToolGroup.getSpecifications();
 		if (add) {
 			// If no specifications then error
 			if (specifications.size() == 0) {
@@ -39,19 +41,20 @@ public abstract class AbstractMcpAsyncServer {
 			}
 		} else {
 			// If given toolGroup is not in added tool groups then error
-			if (this.toolGroups.contains(toolGroup)) {
+			if (!this.toolGroups.contains(asyncToolGroup)) {
 				return Mono.error(McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS)
 						.message("toolGroup has not been added to this server").build());
 			}
 		}
 
-		String toolGroupFullyQualifiedName = toolGroup.name().getFQName();
-		List<AsyncToolSpecification> successfullyAdded = new ArrayList<AsyncToolSpecification>();
+		ToolGroup toolGroup = asyncToolGroup.getToolGroup();
+
+		List<AsyncToolSpecification> successfullyAdded = add ? new ArrayList<AsyncToolSpecification>() : null;
 
 		for (AsyncToolSpecification specification : specifications) {
 
-			AsyncToolSpecification wrappedSpecification = getSpecWithFullyQualifiedName(toolGroupFullyQualifiedName,
-					specification);
+			AsyncToolSpecification wrappedSpecification = getSpecWithFullyQualifiedName(toolGroup, specification);
+
 			try {
 				// Block so that we are sure every tool in group actually gets added
 				if (add) {
@@ -66,18 +69,18 @@ public abstract class AbstractMcpAsyncServer {
 					try {
 						removeTool(s.tool().name()).block();
 					} catch (Exception e) {
-						logger.error("Error removing tool="+ s.tool().name() + " from server");
+						logger.error("Error removing tool=" + s.tool().name() + " from server");
 					}
 				});
 				return Mono.error(mcpError);
 			}
 		}
 		if (add) {
-			toolGroups.add(toolGroup);
-			logger.debug("Added toolGroup=" + toolGroup.name().getFQName() + " to server");
+			toolGroups.add(asyncToolGroup);
+			logger.debug("Added toolGroup=" + toolGroup.name().getFullyQualifiedName() + " to server");
 		} else {
-			toolGroups.remove(toolGroup);
-			logger.debug("Removed toolGroup=" + toolGroup.name().getFQName() + " to server");
+			toolGroups.remove(asyncToolGroup);
+			logger.debug("Removed toolGroup=" + toolGroup.name().getFullyQualifiedName() + " to server");
 		}
 		return Mono.empty();
 	}
@@ -88,19 +91,22 @@ public abstract class AbstractMcpAsyncServer {
 		});
 	}
 
-	private AsyncToolSpecification getSpecWithFullyQualifiedName(String toolGroupFullyQualifiedName,
+	private AsyncToolSpecification getSpecWithFullyQualifiedName(ToolGroup toolGroup,
 			AsyncToolSpecification specification) {
 		Tool tool = specification.tool();
-		if (!tool.name().startsWith(toolGroupFullyQualifiedName)) {
-			tool = Tool.builder().name(toolGroupFullyQualifiedName + tool.name()).title(tool.title())
-					.description(tool.description()).annotations(tool.annotations()).inputSchema(tool.inputSchema())
-					.meta(tool.meta()).outputSchema(tool.outputSchema()).build();
+		String fqToolGroupName = toolGroup.name().getFullyQualifiedName();
+		String toolName = tool.name();
+		if (!toolName.startsWith(fqToolGroupName)) {
+			tool = Tool.builder().name(fqToolGroupName + ToolGroupName.NAME_DELIMITER + tool.name()).title(tool.title())
+					.group(toolGroup).description(tool.description()).annotations(tool.annotations())
+					.inputSchema(tool.inputSchema()).meta(tool.meta()).outputSchema(tool.outputSchema()).build();
 		}
 		return AsyncToolSpecification.builder().tool(tool).callHandler(specification.callHandler()).build();
 	}
 
 	// Abstract methods for the existing API
 	abstract Mono<Void> addTool(AsyncToolSpecification toolSpecification);
+
 	// Abstract methods for the existing API
 	abstract Mono<Void> removeTool(String toolName);
 

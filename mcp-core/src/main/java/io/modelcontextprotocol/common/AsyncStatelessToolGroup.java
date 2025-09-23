@@ -1,20 +1,21 @@
 package io.modelcontextprotocol.common;
 
 import java.util.List;
-
+import io.modelcontextprotocol.spec.McpSchema.ToolGroup;
+import io.modelcontextprotocol.util.Assert;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures.AsyncToolSpecification;
 
-public class AsyncStatelessToolGroup extends ToolGroup {
+public class AsyncStatelessToolGroup extends AbstractToolGroup {
 
 	private final List<AsyncToolSpecification> specifications;
 
-	public AsyncStatelessToolGroup(ToolGroupName name, String description,
-			List<AsyncToolSpecification> specifications) {
-		super(name, description);
+	public AsyncStatelessToolGroup(ToolGroup toolGroup, List<AsyncToolSpecification> specifications) {
+		super(toolGroup);
+		Assert.notNull(specifications,  "specifications cannot be null");
 		this.specifications = specifications;
 	}
 
-	public List<AsyncToolSpecification> getSpecifications() {
+	public List<AsyncToolSpecification> specifications() {
 		return this.specifications;
 	}
 }
