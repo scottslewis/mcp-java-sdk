@@ -23,7 +23,7 @@ public abstract class AbstractMcpAsyncServer {
 	private static final Logger logger = LoggerFactory.getLogger(AbstractMcpAsyncServer.class);
 
 	private final List<AsyncToolGroup> toolGroups = Collections
-			.synchronizedList(new CopyOnWriteArrayList<AsyncToolGroup>());
+		.synchronizedList(new CopyOnWriteArrayList<AsyncToolGroup>());
 
 	Mono<Void> addToolGroup(AsyncToolGroup asyncToolGroup) {
 		return Mono.defer(() -> {
@@ -37,13 +37,16 @@ public abstract class AbstractMcpAsyncServer {
 			// If no specifications then error
 			if (specifications.size() == 0) {
 				return Mono.error(McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS)
-						.message("toolGroup does not contain any tools").build());
+					.message("toolGroup does not contain any tools")
+					.build());
 			}
-		} else {
+		}
+		else {
 			// If given toolGroup is not in added tool groups then error
 			if (!this.toolGroups.contains(asyncToolGroup)) {
 				return Mono.error(McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS)
-						.message("toolGroup has not been added to this server").build());
+					.message("toolGroup has not been added to this server")
+					.build());
 			}
 		}
 
@@ -60,15 +63,19 @@ public abstract class AbstractMcpAsyncServer {
 				if (add) {
 					addTool(wrappedSpecification).block();
 					successfullyAdded.add(wrappedSpecification);
-				} else {
+				}
+				else {
 					removeTool(wrappedSpecification.tool().name()).block();
 				}
-			} catch (McpError mcpError) {
-				// remove any specifications that have been successfully added before failure
+			}
+			catch (McpError mcpError) {
+				// remove any specifications that have been successfully added before
+				// failure
 				successfullyAdded.forEach(s -> {
 					try {
 						removeTool(s.tool().name()).block();
-					} catch (Exception e) {
+					}
+					catch (Exception e) {
 						logger.error("Error removing tool=" + s.tool().name() + " from server");
 					}
 				});
@@ -78,7 +85,8 @@ public abstract class AbstractMcpAsyncServer {
 		if (add) {
 			toolGroups.add(asyncToolGroup);
 			logger.debug("Added toolGroup=" + toolGroup.name().getFullyQualifiedName() + " to server");
-		} else {
+		}
+		else {
 			toolGroups.remove(asyncToolGroup);
 			logger.debug("Removed toolGroup=" + toolGroup.name().getFullyQualifiedName() + " to server");
 		}
@@ -99,9 +107,16 @@ public abstract class AbstractMcpAsyncServer {
 		if (!toolName.startsWith(fqToolGroupName)) {
 			toolName = fqToolGroupName + ToolGroupName.NAME_DELIMITER + tool.name();
 		}
-		tool = Tool.builder().name(toolName).title(tool.title()).group(toolGroup).description(tool.description())
-				.annotations(tool.annotations()).inputSchema(tool.inputSchema()).meta(tool.meta())
-				.outputSchema(tool.outputSchema()).build();
+		tool = Tool.builder()
+			.name(toolName)
+			.title(tool.title())
+			.group(toolGroup)
+			.description(tool.description())
+			.annotations(tool.annotations())
+			.inputSchema(tool.inputSchema())
+			.meta(tool.meta())
+			.outputSchema(tool.outputSchema())
+			.build();
 		return AsyncToolSpecification.builder().tool(tool).callHandler(specification.callHandler()).build();
 	}
 

@@ -17,4 +17,5 @@ public class SyncToolGroup extends AbstractToolGroup {
 	public List<SyncToolSpecification> getSpecifications() {
 		return this.specifications;
 	}
+
 }

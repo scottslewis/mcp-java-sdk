@@ -17,4 +17,5 @@ public class AsyncToolGroup extends AbstractToolGroup {
 	public List<AsyncToolSpecification> getSpecifications() {
 		return this.specifications;
 	}
+
 }

@@ -11,11 +11,12 @@ public class AsyncStatelessToolGroup extends AbstractToolGroup {
 
 	public AsyncStatelessToolGroup(ToolGroup toolGroup, List<AsyncToolSpecification> specifications) {
 		super(toolGroup);
-		Assert.notNull(specifications,  "specifications cannot be null");
+		Assert.notNull(specifications, "specifications cannot be null");
 		this.specifications = specifications;
 	}
 
 	public List<AsyncToolSpecification> specifications() {
 		return this.specifications;
 	}
+
 }

@@ -1257,9 +1257,9 @@ public final class McpSchema {
 	@JsonInclude(JsonInclude.Include.NON_ABSENT)
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public record ToolGroupName( // @formatter:off
-			@JsonProperty ToolGroupName parent, 
+			@JsonProperty ToolGroupName parent,
 			@JsonProperty String segmentName) { // @formatter:on
-		
+
 		public static final String NAME_DELIMITER = ".";
 
 		public static ToolGroupName parseName(String fullyQualifiedName) {
@@ -1273,7 +1273,8 @@ public final class McpSchema {
 			for (int i = 0; i < segments.length; i++) {
 				if (i == (segments.length - 1)) {
 					result = new ToolGroupName(parent, segments[i]);
-				} else {
+				}
+				else {
 					parent = new ToolGroupName(parent, segments[i]);
 				}
 			}
@@ -1290,7 +1291,7 @@ public final class McpSchema {
 		}
 
 	}
-	
+
 	@JsonInclude(JsonInclude.Include.NON_ABSENT)
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public record ToolGroup( // @formatter:off
@@ -1298,7 +1299,7 @@ public final class McpSchema {
 		@JsonProperty("title") String title,
 		@JsonProperty("description") String description) { // @formatter:on
 	}
-	
+
 	/**
 	 * Represents a tool that the server provides. Tools enable servers to expose
 	 * executable functionality to the system. Through these tools, you can interact with
@@ -1337,7 +1338,7 @@ public final class McpSchema {
 			private String name;
 
 			private String title;
-			
+
 			private ToolGroup group;
 
 			private String description;
@@ -1369,7 +1370,7 @@ public final class McpSchema {
 				this.group = group;
 				return this;
 			}
-			
+
 			public Builder inputSchema(JsonSchema inputSchema) {
 				this.inputSchema = inputSchema;
 				return this;
