@@ -97,10 +97,11 @@ public abstract class AbstractMcpAsyncServer {
 		String fqToolGroupName = toolGroup.name().getFullyQualifiedName();
 		String toolName = tool.name();
 		if (!toolName.startsWith(fqToolGroupName)) {
-			tool = Tool.builder().name(fqToolGroupName + ToolGroupName.NAME_DELIMITER + tool.name()).title(tool.title())
-					.group(toolGroup).description(tool.description()).annotations(tool.annotations())
-					.inputSchema(tool.inputSchema()).meta(tool.meta()).outputSchema(tool.outputSchema()).build();
+			toolName = fqToolGroupName + ToolGroupName.NAME_DELIMITER + tool.name();
 		}
+		tool = Tool.builder().name(toolName).title(tool.title()).group(toolGroup).description(tool.description())
+				.annotations(tool.annotations()).inputSchema(tool.inputSchema()).meta(tool.meta())
+				.outputSchema(tool.outputSchema()).build();
 		return AsyncToolSpecification.builder().tool(tool).callHandler(specification.callHandler()).build();
 	}
 
