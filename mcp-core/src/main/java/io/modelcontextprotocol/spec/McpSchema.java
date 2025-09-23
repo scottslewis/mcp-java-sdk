@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -18,6 +19,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
+
+import io.modelcontextprotocol.common.ToolGroupName;
+import io.modelcontextprotocol.common.ToolGroupNameSegment;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.TypeRef;
 
@@ -1252,6 +1256,51 @@ public final class McpSchema {
 		@JsonProperty("returnDirect") Boolean returnDirect) { // @formatter:on
 	}
 
+	@JsonInclude(JsonInclude.Include.NON_ABSENT)
+	@JsonIgnoreProperties(ignoreUnknown = true)
+	public record ToolGroupName( // @formatter:off
+			@JsonProperty ToolGroupName parent, 
+			@JsonProperty String segmentName) { // @formatter:on
+		
+		public static final String NAME_DELIMITER = ".";
+
+		public static ToolGroupName parseName(String fullyQualifiedName) {
+			Objects.requireNonNull(fullyQualifiedName, "fqName must not be null");
+			String[] segments = fullyQualifiedName.split("\\.");
+			if (segments.length == 0) {
+				throw new IllegalArgumentException("fqName must not be empty");
+			}
+			ToolGroupName parent = null;
+			ToolGroupName result = null;
+			for (int i = 0; i < segments.length; i++) {
+				if (i == (segments.length - 1)) {
+					result = new ToolGroupName(parent, segments[i]);
+				} else {
+					parent = new ToolGroupName(parent, segments[i]);
+				}
+			}
+			return result;
+		}
+
+		public String getFullyQualifiedName() {
+			ToolGroupName parent = this.parent();
+			StringBuffer buf = new StringBuffer();
+			if (parent != null) {
+				buf.append(parent.getFullyQualifiedName()).append(NAME_DELIMITER);
+			}
+			return buf.append(segmentName()).toString();
+		}
+
+	}
+	
+	@JsonInclude(JsonInclude.Include.NON_ABSENT)
+	@JsonIgnoreProperties(ignoreUnknown = true)
+	public record ToolGroup( // @formatter:off
+		@JsonProperty("name") ToolGroupName groupName,
+		@JsonProperty("title") String title,
+		@JsonProperty("description") String description) { // @formatter:on
+	}
+	
 	/**
 	 * Represents a tool that the server provides. Tools enable servers to expose
 	 * executable functionality to the system. Through these tools, you can interact with
@@ -1274,6 +1323,7 @@ public final class McpSchema {
 	public record Tool( // @formatter:off
 		@JsonProperty("name") String name,
 		@JsonProperty("title") String title,
+		@JsonProperty("group") ToolGroup group,
 		@JsonProperty("description") String description,
 		@JsonProperty("inputSchema") JsonSchema inputSchema,
 		@JsonProperty("outputSchema") Map<String, Object> outputSchema,
@@ -1289,6 +1339,8 @@ public final class McpSchema {
 			private String name;
 
 			private String title;
+			
+			private ToolGroup group;
 
 			private String description;
 
@@ -1315,6 +1367,11 @@ public final class McpSchema {
 				return this;
 			}
 
+			public Builder group(ToolGroup group) {
+				this.group = group;
+				return this;
+			}
+			
 			public Builder inputSchema(JsonSchema inputSchema) {
 				this.inputSchema = inputSchema;
 				return this;
@@ -1347,7 +1404,7 @@ public final class McpSchema {
 
 			public Tool build() {
 				Assert.hasText(name, "name must not be empty");
-				return new Tool(name, title, description, inputSchema, outputSchema, annotations, meta);
+				return new Tool(name, title, group, description, inputSchema, outputSchema, annotations, meta);
 			}
 
 		}
