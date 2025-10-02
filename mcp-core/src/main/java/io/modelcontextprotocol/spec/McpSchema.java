@@ -1256,48 +1256,56 @@ public final class McpSchema {
 
 	@JsonInclude(JsonInclude.Include.NON_ABSENT)
 	@JsonIgnoreProperties(ignoreUnknown = true)
-	public record ToolGroupName( // @formatter:off
-			@JsonProperty ToolGroupName parent,
-			@JsonProperty String segmentName) { // @formatter:on
-
-		public static final String NAME_DELIMITER = ".";
-
-		public static ToolGroupName parseName(String fullyQualifiedName) {
-			Objects.requireNonNull(fullyQualifiedName, "fqName must not be null");
-			String[] segments = fullyQualifiedName.split("\\.");
-			if (segments.length == 0) {
-				throw new IllegalArgumentException("fqName must not be empty");
-			}
-			ToolGroupName parent = null;
-			ToolGroupName result = null;
-			for (int i = 0; i < segments.length; i++) {
-				if (i == (segments.length - 1)) {
-					result = new ToolGroupName(parent, segments[i]);
-				}
-				else {
-					parent = new ToolGroupName(parent, segments[i]);
-				}
-			}
-			return result;
-		}
-
-		public String getFullyQualifiedName() {
-			ToolGroupName parent = this.parent();
-			StringBuffer buf = new StringBuffer();
-			if (parent != null) {
-				buf.append(parent.getFullyQualifiedName()).append(NAME_DELIMITER);
-			}
-			return buf.append(segmentName()).toString();
-		}
-
-	}
-
-	@JsonInclude(JsonInclude.Include.NON_ABSENT)
-	@JsonIgnoreProperties(ignoreUnknown = true)
 	public record ToolGroup( // @formatter:off
-		@JsonProperty("name") ToolGroupName name,
+		@JsonProperty("name") String name,
+		@JsonProperty("parent") ToolGroup parent,
+		@JsonProperty("description") String description,
 		@JsonProperty("title") String title,
-		@JsonProperty("description") String description) { // @formatter:on
+		@JsonProperty("_meta") Map<String, Object> meta) { // @formatter:on
+
+		public static Builder builder() {
+			return new Builder();
+		}
+
+		public static class Builder {
+
+			private String name;
+
+			private ToolGroup parent;
+
+			private String title;
+
+			private String description;
+
+			private Map<String, Object> meta;
+
+			public Builder name(String name) {
+				this.name = name;
+				return this;
+			}
+
+			public Builder title(String title) {
+				this.title = title;
+				return this;
+			}
+
+			public Builder parent(ToolGroup group) {
+				this.parent = group;
+				return this;
+			}
+
+			public Builder meta(Map<String, Object> meta) {
+				this.meta = meta;
+				return this;
+			}
+
+			public ToolGroup build() {
+				Assert.hasText(name, "name must not be empty");
+				return new ToolGroup(name, parent, description, title, meta);
+			}
+
+		}
+
 	}
 
 	/**
