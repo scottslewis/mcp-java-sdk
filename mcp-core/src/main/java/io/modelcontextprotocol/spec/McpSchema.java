@@ -1306,6 +1306,17 @@ public final class McpSchema {
 
 		}
 
+		private StringBuffer getToolGroupName(StringBuffer sb, ToolGroup tg, String separator) {
+			ToolGroup parent = tg.parent();
+			if (parent != null) {
+				return sb.append(getToolGroupName(sb, parent, separator)).append(separator);
+			}
+			return sb.append(tg.name());
+		}
+
+		public String getFullyQualifiedName(String separator) {
+			return getToolGroupName(new StringBuffer(), this, separator).toString();
+		}
 	}
 
 	/**
@@ -1414,6 +1425,15 @@ public final class McpSchema {
 				return new Tool(name, title, group, description, inputSchema, outputSchema, annotations, meta);
 			}
 
+		}
+
+		public String getFullyQualifiedName(String separator) {
+			StringBuffer sb = new StringBuffer();
+			ToolGroup group = group();
+			if (group != null) {
+				sb.append(group.getFullyQualifiedName(separator)).append(separator);
+			}
+			return sb.append(name()).toString();
 		}
 	}
 
