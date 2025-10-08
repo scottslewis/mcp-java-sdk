@@ -44,6 +44,7 @@
 								-noimportjava:          true;
 								-nouses:                true;
 								-removeheaders:         Private-Package
+								-includeresource ../mcp-core/target/classes/;../mcp-json/target/classes/;../mcp-json-jackson2/target/classes/ 
 								SPI-Consumer: *
 								SPI-Provider: *
 								]]>
