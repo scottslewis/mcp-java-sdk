@@ -557,7 +557,7 @@ public class McpSchemaTests {
 		McpSchema.PromptArgument arg2 = new McpSchema.PromptArgument("arg2", "Second argument", "Second argument",
 				false);
 
-		McpSchema.Prompt prompt = new McpSchema.Prompt("test-prompt", "Test Prompt", "A test prompt",
+		McpSchema.Prompt prompt = new McpSchema.Prompt("test-prompt", null, "Test Prompt", "A test prompt",
 				Arrays.asList(arg1, arg2), Map.of("metaKey", "metaValue"));
 
 		String value = JSON_MAPPER.writeValueAsString(prompt);
