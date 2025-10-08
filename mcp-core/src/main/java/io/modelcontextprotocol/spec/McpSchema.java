@@ -1080,6 +1080,7 @@ public final class McpSchema {
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public record Prompt( // @formatter:off
 		@JsonProperty("name") String name,
+		@JsonProperty("group") Group group,
 		@JsonProperty("title") String title,
 		@JsonProperty("description") String description,
 		@JsonProperty("arguments") List<PromptArgument> arguments,
@@ -1090,8 +1091,13 @@ public final class McpSchema {
 		}
 
 		public Prompt(String name, String title, String description, List<PromptArgument> arguments) {
-			this(name, title, description, arguments != null ? arguments : new ArrayList<>(), null);
+			this(name, null, title, description, arguments != null ? arguments : new ArrayList<>(), null);
 		}
+
+		public Prompt(String name, Group group, String title, String description, List<PromptArgument> arguments) {
+			this(name, group, title, description, arguments != null ? arguments : new ArrayList<>(), null);
+		}
+
 	}
 
 	/**
@@ -1256,9 +1262,9 @@ public final class McpSchema {
 
 	@JsonInclude(JsonInclude.Include.NON_ABSENT)
 	@JsonIgnoreProperties(ignoreUnknown = true)
-	public record ToolGroup( // @formatter:off
+	public record Group( // @formatter:off
 		@JsonProperty("name") String name,
-		@JsonProperty("parent") ToolGroup parent,
+		@JsonProperty("parent") Group parent,
 		@JsonProperty("description") String description,
 		@JsonProperty("title") String title,
 		@JsonProperty("_meta") Map<String, Object> meta) { // @formatter:on
@@ -1271,7 +1277,7 @@ public final class McpSchema {
 
 			private String name;
 
-			private ToolGroup parent;
+			private Group parent;
 
 			private String title;
 
@@ -1289,7 +1295,7 @@ public final class McpSchema {
 				return this;
 			}
 
-			public Builder parent(ToolGroup group) {
+			public Builder parent(Group group) {
 				this.parent = group;
 				return this;
 			}
@@ -1299,15 +1305,15 @@ public final class McpSchema {
 				return this;
 			}
 
-			public ToolGroup build() {
+			public Group build() {
 				Assert.hasText(name, "name must not be empty");
-				return new ToolGroup(name, parent, description, title, meta);
+				return new Group(name, parent, description, title, meta);
 			}
 
 		}
 
-		private StringBuffer getToolGroupName(StringBuffer sb, ToolGroup tg, String separator) {
-			ToolGroup parent = tg.parent();
+		private StringBuffer getToolGroupName(StringBuffer sb, Group tg, String separator) {
+			Group parent = tg.parent();
 			if (parent != null) {
 				return sb.append(getToolGroupName(sb, parent, separator)).append(separator);
 			}
@@ -1341,7 +1347,7 @@ public final class McpSchema {
 	public record Tool( // @formatter:off
 		@JsonProperty("name") String name,
 		@JsonProperty("title") String title,
-		@JsonProperty("group") ToolGroup group,
+		@JsonProperty("group") Group group,
 		@JsonProperty("description") String description,
 		@JsonProperty("inputSchema") JsonSchema inputSchema,
 		@JsonProperty("outputSchema") Map<String, Object> outputSchema,
@@ -1358,7 +1364,7 @@ public final class McpSchema {
 
 			private String title;
 
-			private ToolGroup group;
+			private Group group;
 
 			private String description;
 
@@ -1385,7 +1391,7 @@ public final class McpSchema {
 				return this;
 			}
 
-			public Builder group(ToolGroup group) {
+			public Builder group(Group group) {
 				this.group = group;
 				return this;
 			}
@@ -1429,7 +1435,7 @@ public final class McpSchema {
 
 		public String getFullyQualifiedName(String separator) {
 			StringBuffer sb = new StringBuffer();
-			ToolGroup group = group();
+			Group group = group();
 			if (group != null) {
 				sb.append(group.getFullyQualifiedName(separator)).append(separator);
 			}
