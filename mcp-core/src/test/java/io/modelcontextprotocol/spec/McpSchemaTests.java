@@ -432,7 +432,7 @@ public class McpSchemaTests {
 		Map<String, Object> meta = Map.of("metaKey", "metaValue");
 
 		McpSchema.ResourceTemplate template = new McpSchema.ResourceTemplate("resource://{param}/test", "Test Template",
-				"Test Template", "A test resource template", "text/plain", annotations, meta);
+				null, "Test Template", "A test resource template", "text/plain", annotations, meta);
 
 		String value = JSON_MAPPER.writeValueAsString(template);
 		assertThatJson(value).when(Option.IGNORING_ARRAY_ORDER)

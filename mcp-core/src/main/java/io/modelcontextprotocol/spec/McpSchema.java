@@ -736,6 +736,7 @@ public final class McpSchema {
 	public record Resource( // @formatter:off
 		@JsonProperty("uri") String uri,
 		@JsonProperty("name") String name,
+		@JsonProperty("groups") List<Group> groups,
 		@JsonProperty("title") String title,
 		@JsonProperty("description") String description,
 		@JsonProperty("mimeType") String mimeType,
@@ -750,7 +751,7 @@ public final class McpSchema {
 		@Deprecated
 		public Resource(String uri, String name, String title, String description, String mimeType, Long size,
 				Annotations annotations) {
-			this(uri, name, title, description, mimeType, size, annotations, null);
+			this(uri, name, null, title, description, mimeType, size, annotations, null);
 		}
 
 		/**
@@ -760,7 +761,7 @@ public final class McpSchema {
 		@Deprecated
 		public Resource(String uri, String name, String description, String mimeType, Long size,
 				Annotations annotations) {
-			this(uri, name, null, description, mimeType, size, annotations, null);
+			this(uri, name, null, null, description, mimeType, size, annotations, null);
 		}
 
 		/**
@@ -769,7 +770,7 @@ public final class McpSchema {
 		 */
 		@Deprecated
 		public Resource(String uri, String name, String description, String mimeType, Annotations annotations) {
-			this(uri, name, null, description, mimeType, null, annotations, null);
+			this(uri, name, null, null, description, mimeType, null, annotations, null);
 		}
 
 		public static Builder builder() {
@@ -781,6 +782,8 @@ public final class McpSchema {
 			private String uri;
 
 			private String name;
+
+			private List<Group> groups;
 
 			private String title;
 
@@ -801,6 +804,11 @@ public final class McpSchema {
 
 			public Builder name(String name) {
 				this.name = name;
+				return this;
+			}
+
+			public Builder groups(List<Group> groups) {
+				this.groups = groups;
 				return this;
 			}
 
@@ -838,7 +846,7 @@ public final class McpSchema {
 				Assert.hasText(uri, "uri must not be empty");
 				Assert.hasText(name, "name must not be empty");
 
-				return new Resource(uri, name, title, description, mimeType, size, annotations, meta);
+				return new Resource(uri, name, groups, title, description, mimeType, size, annotations, meta);
 			}
 
 		}
@@ -867,6 +875,7 @@ public final class McpSchema {
 	public record ResourceTemplate( // @formatter:off
 		@JsonProperty("uriTemplate") String uriTemplate,
 		@JsonProperty("name") String name,
+		@JsonProperty("groups") List<Group> groups,
 		@JsonProperty("title") String title,
 		@JsonProperty("description") String description,
 		@JsonProperty("mimeType") String mimeType,
@@ -875,12 +884,12 @@ public final class McpSchema {
 
 		public ResourceTemplate(String uriTemplate, String name, String title, String description, String mimeType,
 				Annotations annotations) {
-			this(uriTemplate, name, title, description, mimeType, annotations, null);
+			this(uriTemplate, name, null, title, description, mimeType, annotations, null);
 		}
 
 		public ResourceTemplate(String uriTemplate, String name, String description, String mimeType,
 				Annotations annotations) {
-			this(uriTemplate, name, null, description, mimeType, annotations);
+			this(uriTemplate, name, (List<Group>) null, (String) null, description, mimeType, annotations, null);
 		}
 
 		public static Builder builder() {
@@ -892,6 +901,8 @@ public final class McpSchema {
 			private String uriTemplate;
 
 			private String name;
+
+			private List<Group> groups;
 
 			private String title;
 
@@ -910,6 +921,11 @@ public final class McpSchema {
 
 			public Builder name(String name) {
 				this.name = name;
+				return this;
+			}
+
+			public Builder groups(List<Group> groups) {
+				this.groups = groups;
 				return this;
 			}
 
@@ -942,7 +958,7 @@ public final class McpSchema {
 				Assert.hasText(uriTemplate, "uri must not be empty");
 				Assert.hasText(name, "name must not be empty");
 
-				return new ResourceTemplate(uriTemplate, name, title, description, mimeType, annotations, meta);
+				return new ResourceTemplate(uriTemplate, name, groups, title, description, mimeType, annotations, meta);
 			}
 
 		}
@@ -1143,7 +1159,7 @@ public final class McpSchema {
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public record Prompt( // @formatter:off
 		@JsonProperty("name") String name,
-		@JsonProperty("group") Group group,
+		@JsonProperty("groups") List<Group> groups,
 		@JsonProperty("title") String title,
 		@JsonProperty("description") String description,
 		@JsonProperty("arguments") List<PromptArgument> arguments,
@@ -1157,8 +1173,9 @@ public final class McpSchema {
 			this(name, null, title, description, arguments != null ? arguments : new ArrayList<>(), null);
 		}
 
-		public Prompt(String name, Group group, String title, String description, List<PromptArgument> arguments) {
-			this(name, group, title, description, arguments != null ? arguments : new ArrayList<>(), null);
+		public Prompt(String name, List<Group> groups, String title, String description,
+				List<PromptArgument> arguments) {
+			this(name, groups, title, description, arguments != null ? arguments : new ArrayList<>(), null);
 		}
 	}
 
@@ -1409,7 +1426,7 @@ public final class McpSchema {
 	public record Tool( // @formatter:off
 		@JsonProperty("name") String name,
 		@JsonProperty("title") String title,
-		@JsonProperty("group") Group group,
+		@JsonProperty("groups") List<Group> groups,
 		@JsonProperty("description") String description,
 		@JsonProperty("inputSchema") JsonSchema inputSchema,
 		@JsonProperty("outputSchema") Map<String, Object> outputSchema,
@@ -1426,7 +1443,7 @@ public final class McpSchema {
 
 			private String title;
 
-			private Group group;
+			private List<Group> groups;
 
 			private String description;
 
@@ -1453,8 +1470,8 @@ public final class McpSchema {
 				return this;
 			}
 
-			public Builder group(Group group) {
-				this.group = group;
+			public Builder groups(List<Group> groups) {
+				this.groups = groups;
 				return this;
 			}
 
@@ -1490,7 +1507,7 @@ public final class McpSchema {
 
 			public Tool build() {
 				Assert.hasText(name, "name must not be empty");
-				return new Tool(name, title, group, description, inputSchema, outputSchema, annotations, meta);
+				return new Tool(name, title, groups, description, inputSchema, outputSchema, annotations, meta);
 			}
 
 		}
