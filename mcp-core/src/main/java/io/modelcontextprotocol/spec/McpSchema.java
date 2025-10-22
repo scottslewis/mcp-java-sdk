@@ -12,11 +12,14 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.TypeRef;
 import io.modelcontextprotocol.util.Assert;
@@ -1341,11 +1344,12 @@ public final class McpSchema {
 
 	@JsonInclude(JsonInclude.Include.NON_ABSENT)
 	@JsonIgnoreProperties(ignoreUnknown = true)
+	@JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class)
 	public record Group( // @formatter:off
 		@JsonProperty("name") String name,
-		@JsonProperty("parent") Group parent,
-		@JsonProperty("description") String description,
 		@JsonProperty("title") String title,
+		@JsonProperty("description") String description,
+		@JsonProperty("parent") Group parent,
 		@JsonProperty("_meta") Map<String, Object> meta) implements Identifier { // @formatter:on
 
 		public static Builder builder() {
@@ -1384,23 +1388,29 @@ public final class McpSchema {
 				return this;
 			}
 
+			public Builder description(String description) {
+				this.description = description;
+				return this;
+			}
+
 			public Group build() {
-				Assert.hasText(name, "name must not be empty");
-				return new Group(name, parent, description, title, meta);
+				Assert.notNull(name, "name must not be empty");
+				return new Group(this.name, this.title, this.description, this.parent, this.meta);
 			}
 
 		}
 
-		private StringBuffer getToolGroupName(StringBuffer sb, Group tg, String separator) {
+		private String getToolGroupName(StringBuffer sb, Group tg, String separator) {
 			Group parent = tg.parent();
 			if (parent != null) {
-				return sb.append(getToolGroupName(sb, parent, separator)).append(separator);
+				String parentName = getToolGroupName(sb, parent, separator);
+				return new StringBuffer(parentName).append(separator).append(tg.name()).toString();
 			}
-			return sb.append(tg.name());
+			return tg.name();
 		}
 
 		public String getFullyQualifiedName(String separator) {
-			return getToolGroupName(new StringBuffer(), this, separator).toString();
+			return getToolGroupName(new StringBuffer(), this, separator);
 		}
 	}
 
