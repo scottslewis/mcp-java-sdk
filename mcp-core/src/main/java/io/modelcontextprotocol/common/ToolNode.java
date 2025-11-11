@@ -92,7 +92,8 @@ public class ToolNode extends AbstractLeafNode {
 	@Override
 	public String toString() {
 		return "ToolNode [name=" + name + ", title=" + title + ", description=" + description + ", meta=" + meta
-				+ ", inputSchema=" + inputSchema + ", outputSchema=" + outputSchema + ", toolAnnotation=" + "]";
+				+ ", inputSchema=" + inputSchema + ", outputSchema=" + outputSchema + ", toolAnnotation="
+				+ toolAnnotation + "]";
 	}
 
 }
