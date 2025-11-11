@@ -2,7 +2,7 @@ package io.modelcontextprotocol.common;
 
 import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
 
-public class ToolAnnotationNode {
+public class ToolAnnotationsNode {
 
 	protected String title;
 
@@ -16,7 +16,7 @@ public class ToolAnnotationNode {
 
 	protected Boolean returnDirect;
 
-	public ToolAnnotationNode() {
+	public ToolAnnotationsNode() {
 	}
 
 	public String getTitle() {
@@ -72,8 +72,8 @@ public class ToolAnnotationNode {
 				getOpenWorldHint(), getReturnDirect());
 	}
 
-	public static ToolAnnotationNode deserialize(ToolAnnotations annotations) {
-		ToolAnnotationNode tn = new ToolAnnotationNode();
+	public static ToolAnnotationsNode deserialize(ToolAnnotations annotations) {
+		ToolAnnotationsNode tn = new ToolAnnotationsNode();
 		tn.setTitle(annotations.title());
 		tn.setReadOnlyHint(annotations.readOnlyHint());
 		tn.setDestructiveHint(annotations.destructiveHint());

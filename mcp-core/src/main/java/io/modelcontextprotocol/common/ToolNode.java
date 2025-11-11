@@ -14,7 +14,7 @@ public class ToolNode extends AbstractLeafNode {
 
 	protected Map<String, Object> outputSchema;
 
-	protected ToolAnnotationNode toolAnnotation;
+	protected ToolAnnotationsNode toolAnnotation;
 
 	public ToolNode(String name) {
 		super(name);
@@ -36,11 +36,11 @@ public class ToolNode extends AbstractLeafNode {
 		this.outputSchema = outputSchema;
 	}
 
-	public ToolAnnotationNode getToolAnnotation() {
+	public ToolAnnotationsNode getToolAnnotation() {
 		return toolAnnotation;
 	}
 
-	public void setToolAnnotation(ToolAnnotationNode toolAnnotation) {
+	public void setToolAnnotation(ToolAnnotationsNode toolAnnotation) {
 		this.toolAnnotation = toolAnnotation;
 	}
 
@@ -52,7 +52,7 @@ public class ToolNode extends AbstractLeafNode {
 		builder.inputSchema(getInputSchema());
 		builder.outputSchema(getOutputSchema());
 		builder.meta(getMeta());
-		ToolAnnotationNode an = getToolAnnotation();
+		ToolAnnotationsNode an = getToolAnnotation();
 		builder.annotations((an != null) ? an.serialize() : null);
 		LinkedHashSet<GroupNode> parentGroupNodes = getParentGroups();
 		if (parentGroupNodes != null) {
@@ -76,7 +76,7 @@ public class ToolNode extends AbstractLeafNode {
 			tn.setOutputSchema(tool.outputSchema());
 			McpSchema.ToolAnnotations a = tool.annotations();
 			if (a != null) {
-				tn.setToolAnnotation(ToolAnnotationNode.deserialize(a));
+				tn.setToolAnnotation(ToolAnnotationsNode.deserialize(a));
 			}
 			List<McpSchema.Group> parentGroups = tool.groups();
 			if (parentGroups != null) {

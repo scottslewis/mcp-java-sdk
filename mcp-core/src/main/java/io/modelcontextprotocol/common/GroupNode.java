@@ -17,6 +17,8 @@ public class GroupNode extends AbstractNode {
 
 	protected LinkedHashSet<PromptNode> childPrompts = new LinkedHashSet<PromptNode>();
 
+	protected LinkedHashSet<ResourceNode> childResources = new LinkedHashSet<ResourceNode>();
+
 	public GroupNode(String name) {
 		super(name);
 	}
@@ -100,6 +102,32 @@ public class GroupNode extends AbstractNode {
 			boolean removed = childPrompts.remove(childPrompt);
 			if (removed) {
 				childPrompt.removeParentGroup(this);
+				return true;
+			}
+			return false;
+		}
+	}
+
+	public LinkedHashSet<ResourceNode> getChildrenResources() {
+		return this.childResources;
+	}
+
+	public boolean addChildResource(ResourceNode childResource) {
+		synchronized (childResources) {
+			boolean added = childResources.add(childResource);
+			if (added) {
+				childResource.addParentGroup(this);
+				return true;
+			}
+			return false;
+		}
+	}
+
+	public boolean removeChildPrompt(ResourceNode childResource) {
+		synchronized (childResources) {
+			boolean removed = childResources.remove(childResource);
+			if (removed) {
+				childResource.removeParentGroup(this);
 				return true;
 			}
 			return false;
