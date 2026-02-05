@@ -1,3 +1,6 @@
+/**
+ * Copyright 2026 - 2026 the original author or authors.
+ */
 package io.modelcontextprotocol.json;
 
 import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
