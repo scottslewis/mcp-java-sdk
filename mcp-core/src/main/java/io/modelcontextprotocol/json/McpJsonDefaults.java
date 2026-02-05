@@ -8,29 +8,33 @@ import io.modelcontextprotocol.json.schema.JsonSchemaValidatorSupplier;
 import io.modelcontextprotocol.util.McpServiceLoader;
 
 /**
- * This class is to be used to provide access to the default
- * McpJsonMapper and to the default JsonSchemaValidator instances via the
- * static methods:  getDefaultMcpJsonMapper and getDefaultJsonSchemaValidator.
- * <p></p>
- * The initialization of (singleton) instances of this class is different
- * in non-OSGi environments and OSGi environments.  Specifically, in non-OSGi environments
- * The McpJsonDefaults class will be loaded by whatever classloader is used
- * to call one of the existing static get methods for the first time. For servers,
- * this will usually be in response to the creation of the first McpServer instance.
- * At that first time, the mcpMapperServiceLoader and mcpValidatorServiceLoader will be
- * null, and the McpJsonDefaults constructor will be called, creating/initializing the
- * mcpMapperServiceLoader and the mcpValidatorServiceLoader...which will then be used
- * to call the ServiceLoader.load method.<p></p>
+ * This class is to be used to provide access to the default McpJsonMapper and to the
+ * default JsonSchemaValidator instances via the static methods: getDefaultMcpJsonMapper
+ * and getDefaultJsonSchemaValidator.
+ * <p>
+ * </p>
+ * The initialization of (singleton) instances of this class is different in non-OSGi
+ * environments and OSGi environments. Specifically, in non-OSGi environments The
+ * McpJsonDefaults class will be loaded by whatever classloader is used to call one of the
+ * existing static get methods for the first time. For servers, this will usually be in
+ * response to the creation of the first McpServer instance. At that first time, the
+ * mcpMapperServiceLoader and mcpValidatorServiceLoader will be null, and the
+ * McpJsonDefaults constructor will be called, creating/initializing the
+ * mcpMapperServiceLoader and the mcpValidatorServiceLoader...which will then be used to
+ * call the ServiceLoader.load method.
+ * <p>
+ * </p>
  * In OSGi environments, upon bundle activation SCR will create a new (singleton) instance
- * of McpJsonDefaults (via the constructor), and then call then call the  setMcpJsonMapperSupplier
- * and setJsonSchemaValidatorSupplier methods with the SCR-discovered instances of those
- * services.  This does depend upon the jars/bundles providing those suppliers to be
- * started/activated. This SCR behavior is dictated by xml files in OSGi-INF directory
- * of mcp-core (this project/jar/bundle), and the jsonmapper and jsonschemvalidator provider
- * jars/bundles (e.g. mcp-json-jackson2, 3, or others).
- * 
- * <p></p>
- * 
+ * of McpJsonDefaults (via the constructor), and then call then call the
+ * setMcpJsonMapperSupplier and setJsonSchemaValidatorSupplier methods with the
+ * SCR-discovered instances of those services. This does depend upon the jars/bundles
+ * providing those suppliers to be started/activated. This SCR behavior is dictated by xml
+ * files in OSGi-INF directory of mcp-core (this project/jar/bundle), and the jsonmapper
+ * and jsonschemvalidator provider jars/bundles (e.g. mcp-json-jackson2, 3, or others).
+ *
+ * <p>
+ * </p>
+ *
  */
 public class McpJsonDefaults {
 
