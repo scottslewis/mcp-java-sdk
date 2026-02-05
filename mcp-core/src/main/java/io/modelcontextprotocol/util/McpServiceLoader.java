@@ -8,6 +8,21 @@ import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.function.Supplier;
 
+/**
+ * Instance of this class are intended to be used differently in OSGi and
+ * non-OSGi environments.  In all non-OSGi environments the supplier member
+ * will be <code>null</code> and the serviceLoad method will be called to
+ * use the ServiceLoader.load to find the first instance of the supplier (assuming
+ * one is present in the runtime),
+ * cache it, and call the supplier's get method.<p></p>
+ * In OSGi environments, the Service component runtime (scr) will call
+ * the setSupplier method upon bundle activation (assuming one is present in 
+ * the runtime), and subsequent calls will use the given supplier instance
+ * rather than the ServiceLoader.load.
+ * 
+ * @param <S> the type of the supplier
+ * @param <R> the type of the supplier result/returned value
+ */
 public class McpServiceLoader<S extends Supplier<R>, R> {
 
 	private Class<S> supplierType;
