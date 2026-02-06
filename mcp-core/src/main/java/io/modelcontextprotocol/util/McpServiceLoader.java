@@ -57,7 +57,7 @@ public class McpServiceLoader<S extends Supplier<R>, R> {
 				Optional<?> sl = serviceLoad(this.supplierType);
 				if (sl.isEmpty()) {
 					throw new ServiceConfigurationError(
-							"No %s available for creating McpJsonMapper".format(this.supplierType.getSimpleName()));
+							"No %s available for creating McpJsonMapper".formatted(this.supplierType.getSimpleName()));
 				}
 				this.supplier = (S) sl.get();
 			}
