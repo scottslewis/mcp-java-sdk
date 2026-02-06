@@ -25,7 +25,7 @@ import io.modelcontextprotocol.util.McpServiceLoader;
  * <p>
  * </p>
  * In OSGi environments, upon bundle activation SCR will create a new (singleton) instance
- * of McpJsonDefaults (via the constructor), and then call then call the
+ * of McpJsonDefaults (via the constructor), and then inject suppliers via the
  * setMcpJsonMapperSupplier and setJsonSchemaValidatorSupplier methods with the
  * SCR-discovered instances of those services. This does depend upon the jars/bundles
  * providing those suppliers to be started/activated. This SCR behavior is dictated by xml
