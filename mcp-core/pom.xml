@@ -41,6 +41,7 @@
 								Automatic-Module-Name:  ${project.groupId}.${project.artifactId}
 								Import-Package:         jakarta.*;resolution:=optional, \
 								                        *;
+								Service-Component: 		OSGI-INF/io.modelcontextprotocol.json.McpJsonDefaults.xml
 								Export-Package:         io.modelcontextprotocol.*;version="${version}";-noimport:=true
 								-noimportjava:          true;
 								-nouses:                true;
