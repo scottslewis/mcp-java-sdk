@@ -6,12 +6,19 @@ package io.modelcontextprotocol.server;
 
 import static io.modelcontextprotocol.util.ToolsUtils.EMPTY_JSON_SCHEMA;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 import java.util.List;
 import java.util.Map;
 
 import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpServerTransportProvider;
+import io.modelcontextprotocol.util.ToolNameValidator;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
@@ -262,6 +269,62 @@ class AsyncToolSpecificationBuilderTest {
 	@Test
 	void fromSyncShouldReturnNullWhenSyncSpecIsNull() {
 		assertThat(McpServerFeatures.AsyncToolSpecification.fromSync(null)).isNull();
+	}
+
+	@Nested
+	class ToolNameValidation {
+
+		private McpServerTransportProvider transportProvider;
+
+		@BeforeEach
+		void setUp() {
+			transportProvider = mock(McpServerTransportProvider.class);
+			System.clearProperty(ToolNameValidator.STRICT_VALIDATION_PROPERTY);
+		}
+
+		@AfterEach
+		void tearDown() {
+			System.clearProperty(ToolNameValidator.STRICT_VALIDATION_PROPERTY);
+		}
+
+		@Test
+		void defaultShouldThrowOnInvalidName() {
+			Tool invalidTool = Tool.builder().name("invalid tool name").build();
+
+			assertThatThrownBy(() -> McpServer.async(transportProvider).tool(invalidTool, (exchange, args) -> null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("invalid characters");
+		}
+
+		@Test
+		void systemPropertyFalseShouldWarnOnly() {
+			System.setProperty(ToolNameValidator.STRICT_VALIDATION_PROPERTY, "false");
+			Tool invalidTool = Tool.builder().name("invalid tool name").build();
+
+			assertThatCode(() -> McpServer.async(transportProvider).tool(invalidTool, (exchange, args) -> null))
+				.doesNotThrowAnyException();
+		}
+
+		@Test
+		void perServerFalseShouldWarnOnly() {
+			Tool invalidTool = Tool.builder().name("invalid tool name").build();
+
+			assertThatCode(() -> McpServer.async(transportProvider)
+				.strictToolNameValidation(false)
+				.tool(invalidTool, (exchange, args) -> null)).doesNotThrowAnyException();
+		}
+
+		@Test
+		void perServerTrueShouldOverrideSystemProperty() {
+			System.setProperty(ToolNameValidator.STRICT_VALIDATION_PROPERTY, "false");
+			Tool invalidTool = Tool.builder().name("invalid tool name").build();
+
+			assertThatThrownBy(() -> McpServer.async(transportProvider)
+				.strictToolNameValidation(true)
+				.tool(invalidTool, (exchange, args) -> null)).isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("invalid characters");
+		}
+
 	}
 
 }

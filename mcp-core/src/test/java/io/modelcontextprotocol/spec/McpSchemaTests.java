@@ -1765,4 +1765,14 @@ public class McpSchemaTests {
 					{"progressToken":"progress-token-789","progress":0.25}"""));
 	}
 
+	// Tool Name Validation Tests
+
+	@Test
+	void testToolBuilderWithValidName() {
+		McpSchema.Tool tool = McpSchema.Tool.builder().name("valid_tool-name.v1").description("A test tool").build();
+
+		assertThat(tool.name()).isEqualTo("valid_tool-name.v1");
+		assertThat(tool.description()).isEqualTo("A test tool");
+	}
+
 }
