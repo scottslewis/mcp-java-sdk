@@ -1466,6 +1466,7 @@ public final class McpSchema {
 			}
 
 			public Tool build() {
+				Assert.hasText(name, "name must not be empty");
 				return new Tool(name, title, description, inputSchema, outputSchema, annotations, meta);
 			}
 

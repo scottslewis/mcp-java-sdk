@@ -4,29 +4,32 @@
 
 package io.modelcontextprotocol.server;
 
-import static io.modelcontextprotocol.util.ToolsUtils.EMPTY_JSON_SCHEMA;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-
 import java.util.List;
 import java.util.Map;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+import io.modelcontextprotocol.spec.McpSchema.TextContent;
+import io.modelcontextprotocol.spec.McpSchema.Tool;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import io.modelcontextprotocol.util.ToolNameValidator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
-import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
-import io.modelcontextprotocol.spec.McpSchema.TextContent;
-import io.modelcontextprotocol.spec.McpSchema.Tool;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import static io.modelcontextprotocol.util.ToolsUtils.EMPTY_JSON_SCHEMA;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link McpServerFeatures.AsyncToolSpecification.Builder}.
@@ -276,15 +279,23 @@ class AsyncToolSpecificationBuilderTest {
 
 		private McpServerTransportProvider transportProvider;
 
+		private final Logger logger = (Logger) LoggerFactory.getLogger(ToolNameValidator.class);
+
+		private final ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
+
 		@BeforeEach
 		void setUp() {
 			transportProvider = mock(McpServerTransportProvider.class);
 			System.clearProperty(ToolNameValidator.STRICT_VALIDATION_PROPERTY);
+			logAppender.start();
+			logger.addAppender(logAppender);
 		}
 
 		@AfterEach
 		void tearDown() {
 			System.clearProperty(ToolNameValidator.STRICT_VALIDATION_PROPERTY);
+			logger.detachAppender(logAppender);
+			logAppender.stop();
 		}
 
 		@Test
@@ -297,25 +308,27 @@ class AsyncToolSpecificationBuilderTest {
 		}
 
 		@Test
-		void systemPropertyFalseShouldWarnOnly() {
+		void lenientDefaultShouldLogOnInvalidName() {
 			System.setProperty(ToolNameValidator.STRICT_VALIDATION_PROPERTY, "false");
 			Tool invalidTool = Tool.builder().name("invalid tool name").build();
 
 			assertThatCode(() -> McpServer.async(transportProvider).tool(invalidTool, (exchange, args) -> null))
 				.doesNotThrowAnyException();
+			assertThat(logAppender.list).hasSize(1);
 		}
 
 		@Test
-		void perServerFalseShouldWarnOnly() {
+		void lenientConfigurationShouldLogOnInvalidName() {
 			Tool invalidTool = Tool.builder().name("invalid tool name").build();
 
 			assertThatCode(() -> McpServer.async(transportProvider)
 				.strictToolNameValidation(false)
 				.tool(invalidTool, (exchange, args) -> null)).doesNotThrowAnyException();
+			assertThat(logAppender.list).hasSize(1);
 		}
 
 		@Test
-		void perServerTrueShouldOverrideSystemProperty() {
+		void serverConfigurationShouldOverrideDefault() {
 			System.setProperty(ToolNameValidator.STRICT_VALIDATION_PROPERTY, "false");
 			Tool invalidTool = Tool.builder().name("invalid tool name").build();
 
