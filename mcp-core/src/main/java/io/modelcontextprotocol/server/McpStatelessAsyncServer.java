@@ -77,7 +77,7 @@ public class McpStatelessAsyncServer {
 
 	private final JsonSchemaValidator jsonSchemaValidator;
 
-	McpStatelessAsyncServer(McpStatelessServerTransport mcpTransport, McpJsonMapper jsonMapper,
+	public McpStatelessAsyncServer(McpStatelessServerTransport mcpTransport, McpJsonMapper jsonMapper,
 			McpStatelessServerFeatures.Async features, Duration requestTimeout,
 			McpUriTemplateManagerFactory uriTemplateManagerFactory, JsonSchemaValidator jsonSchemaValidator) {
 		this.mcpTransportProvider = mcpTransport;

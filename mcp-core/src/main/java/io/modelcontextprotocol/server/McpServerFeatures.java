@@ -39,7 +39,7 @@ public class McpServerFeatures {
 	 * roots list changes
 	 * @param instructions The server instructions text
 	 */
-	record Async(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
+	public record Async(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
 			List<McpServerFeatures.AsyncToolSpecification> tools, Map<String, AsyncResourceSpecification> resources,
 			Map<String, McpServerFeatures.AsyncResourceTemplateSpecification> resourceTemplates,
 			Map<String, McpServerFeatures.AsyncPromptSpecification> prompts,
@@ -59,7 +59,7 @@ public class McpServerFeatures {
 		 * the roots list changes
 		 * @param instructions The server instructions text
 		 */
-		Async(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
+		public Async(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
 				List<McpServerFeatures.AsyncToolSpecification> tools, Map<String, AsyncResourceSpecification> resources,
 				Map<String, McpServerFeatures.AsyncResourceTemplateSpecification> resourceTemplates,
 				Map<String, McpServerFeatures.AsyncPromptSpecification> prompts,
@@ -153,7 +153,7 @@ public class McpServerFeatures {
 	 * roots list changes
 	 * @param instructions The server instructions text
 	 */
-	record Sync(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
+	public record Sync(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
 			List<McpServerFeatures.SyncToolSpecification> tools,
 			Map<String, McpServerFeatures.SyncResourceSpecification> resources,
 			Map<String, McpServerFeatures.SyncResourceTemplateSpecification> resourceTemplates,
@@ -173,7 +173,7 @@ public class McpServerFeatures {
 		 * the roots list changes
 		 * @param instructions The server instructions text
 		 */
-		Sync(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
+		public Sync(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
 				List<McpServerFeatures.SyncToolSpecification> tools,
 				Map<String, McpServerFeatures.SyncResourceSpecification> resources,
 				Map<String, McpServerFeatures.SyncResourceTemplateSpecification> resourceTemplates,

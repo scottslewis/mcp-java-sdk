@@ -38,7 +38,7 @@ public class McpStatelessServerFeatures {
 	 * @param prompts The map of prompt specifications
 	 * @param instructions The server instructions text
 	 */
-	record Async(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
+	public record Async(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
 			List<McpStatelessServerFeatures.AsyncToolSpecification> tools,
 			Map<String, AsyncResourceSpecification> resources,
 			Map<String, McpStatelessServerFeatures.AsyncResourceTemplateSpecification> resourceTemplates,
@@ -56,7 +56,7 @@ public class McpStatelessServerFeatures {
 		 * @param prompts The map of prompt specifications
 		 * @param instructions The server instructions text
 		 */
-		Async(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
+		public Async(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
 				List<McpStatelessServerFeatures.AsyncToolSpecification> tools,
 				Map<String, AsyncResourceSpecification> resources,
 				Map<String, McpStatelessServerFeatures.AsyncResourceTemplateSpecification> resourceTemplates,

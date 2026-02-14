@@ -27,7 +27,7 @@ public class McpStatelessSyncServer {
 
 	private final boolean immediateExecution;
 
-	McpStatelessSyncServer(McpStatelessAsyncServer asyncServer, boolean immediateExecution) {
+	public McpStatelessSyncServer(McpStatelessAsyncServer asyncServer, boolean immediateExecution) {
 		this.asyncServer = asyncServer;
 		this.immediateExecution = immediateExecution;
 	}

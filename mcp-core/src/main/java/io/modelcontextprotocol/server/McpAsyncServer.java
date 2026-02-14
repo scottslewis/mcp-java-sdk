@@ -128,7 +128,7 @@ public class McpAsyncServer {
 	 * @param features The MCP server supported features.
 	 * @param jsonMapper The JsonMapper to use for JSON serialization/deserialization
 	 */
-	McpAsyncServer(McpServerTransportProvider mcpTransportProvider, McpJsonMapper jsonMapper,
+	public McpAsyncServer(McpServerTransportProvider mcpTransportProvider, McpJsonMapper jsonMapper,
 			McpServerFeatures.Async features, Duration requestTimeout,
 			McpUriTemplateManagerFactory uriTemplateManagerFactory, JsonSchemaValidator jsonSchemaValidator) {
 		this.mcpTransportProvider = mcpTransportProvider;
@@ -153,7 +153,7 @@ public class McpAsyncServer {
 				requestTimeout, transport, this::asyncInitializeRequestHandler, requestHandlers, notificationHandlers));
 	}
 
-	McpAsyncServer(McpStreamableServerTransportProvider mcpTransportProvider, McpJsonMapper jsonMapper,
+	public McpAsyncServer(McpStreamableServerTransportProvider mcpTransportProvider, McpJsonMapper jsonMapper,
 			McpServerFeatures.Async features, Duration requestTimeout,
 			McpUriTemplateManagerFactory uriTemplateManagerFactory, JsonSchemaValidator jsonSchemaValidator) {
 		this.mcpTransportProvider = mcpTransportProvider;
