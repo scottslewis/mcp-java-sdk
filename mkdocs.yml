@@ -48,12 +48,18 @@ nav:
   - Contributing:
     - Contributing Guide: contribute.md
     - Documentation: development.md
+  - Blog:
+    - blog/index.md
   - API Reference: https://javadoc.io/doc/io.modelcontextprotocol.sdk/mcp-core/latest
 
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.highlight:
@@ -77,6 +83,7 @@ markdown_extensions:
 
 plugins:
   - search
+  - blog
 
 extra:
   social:
