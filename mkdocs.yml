@@ -46,7 +46,7 @@ nav:
     - MCP Client: client.md
     - MCP Server: server.md
   - Contributing:
-    - Contributing Guide: contributing.md
+    - Contributing Guide: contribute.md
     - Documentation: development.md
   - API Reference: https://javadoc.io/doc/io.modelcontextprotocol.sdk/mcp-core/latest
 
