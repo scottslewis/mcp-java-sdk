@@ -39,9 +39,9 @@ jobs:
         run: |
           PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version --quiet -DforceStdout)
           if [[ "${PROJECT_VERSION}" == *-SNAPSHOT ]]; then
-            ALIAS="dev"
+            ALIAS="latest-snapshot"
           else
-            ALIAS="prod"
+            ALIAS="latest"
           fi
           mike deploy --push --update-aliases "${PROJECT_VERSION}" "${ALIAS}"
           mike set-default "${ALIAS}" --push
@@ -50,5 +50,5 @@ jobs:
         if: github.event_name == 'release'
         run: |
           VERSION=${GITHUB_REF_NAME}
-          mike deploy --push --update-aliases "${VERSION}" release
-          mike set-default release --push
+          mike deploy --push --update-aliases "${VERSION}" latest
+          mike set-default latest --push

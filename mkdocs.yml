@@ -81,20 +81,18 @@ markdown_extensions:
   - toc:
       permalink: true
 
-plugins:
-  - search
-  - blog
-
 extra:
   version:
     provider: mike
     alias: true
     default: 
-      - dev
+      - latest-snapshot
       - latest
-      - prod
-      - release
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/modelcontextprotocol/java-sdk
   generator: false
+
+plugins:
+  - search
+  - blog
