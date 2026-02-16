@@ -84,7 +84,6 @@ markdown_extensions:
 extra:
   version:
     provider: mike
-    alias: true
     default: 
       - latest-snapshot
       - latest
