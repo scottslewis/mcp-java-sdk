@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.context.ContextView;
 
 /**
  * The Model Context Protocol (MCP) client implementation that provides asynchronous
@@ -317,11 +318,18 @@ public class McpAsyncClient {
 		};
 
 		this.initializer = new LifecycleInitializer(clientCapabilities, clientInfo, transport.protocolVersions(),
-				initializationTimeout, ctx -> new McpClientSession(requestTimeout, transport, requestHandlers,
-						notificationHandlers, con -> con.contextWrite(ctx)),
+				initializationTimeout,
+				ctx -> buildClientSession(requestTimeout, transport, requestHandlers, notificationHandlers, ctx),
 				postInitializationHook);
 
 		this.transport.setExceptionHandler(this.initializer::handleException);
+	}
+
+	protected McpClientSession buildClientSession(Duration requestTimeout, McpClientTransport transport,
+			Map<String, RequestHandler<?>> requestHandlers, Map<String, NotificationHandler> notificationHandlers,
+			ContextView ctx) {
+		return new McpClientSession(requestTimeout, transport, requestHandlers, notificationHandlers,
+				con -> con.contextWrite(ctx));
 	}
 
 	/**

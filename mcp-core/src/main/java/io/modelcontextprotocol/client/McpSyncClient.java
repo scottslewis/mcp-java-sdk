@@ -64,7 +64,7 @@ public class McpSyncClient implements AutoCloseable {
 	// is not a requirement?
 	private static final long DEFAULT_CLOSE_TIMEOUT_MS = 10_000L;
 
-	private final McpAsyncClient delegate;
+	protected final McpAsyncClient delegate;
 
 	private final Supplier<McpTransportContext> contextProvider;
 
