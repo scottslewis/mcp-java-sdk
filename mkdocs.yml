@@ -11,14 +11,14 @@ theme:
   logo: images/logo-light.svg
   palette:
     - scheme: default
-      primary: green
-      accent: green
+      primary: blue grey
+      accent: blue grey
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - scheme: slate
-      primary: green
-      accent: green
+      primary: blue grey
+      accent: blue grey
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -90,6 +90,3 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/modelcontextprotocol/java-sdk
   generator: false
-
-extra_css:
-  - stylesheets/extra.css
