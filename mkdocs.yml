@@ -86,6 +86,9 @@ plugins:
   - blog
 
 extra:
+  version:
+    provider: mike
+    alias: true
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/modelcontextprotocol/java-sdk
