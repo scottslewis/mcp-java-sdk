@@ -101,7 +101,7 @@ public class McpServerFeatures {
 		 * @return a specification which is protected from blocking calls specified by the
 		 * user.
 		 */
-		static Async fromSync(Sync syncSpec, boolean immediateExecution) {
+		public static Async fromSync(Sync syncSpec, boolean immediateExecution) {
 			List<McpServerFeatures.AsyncToolSpecification> tools = new ArrayList<>();
 			for (var tool : syncSpec.tools()) {
 				tools.add(AsyncToolSpecification.fromSync(tool, immediateExecution));
