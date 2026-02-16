@@ -75,7 +75,7 @@ public class McpSyncClient implements AutoCloseable {
 	 * @param contextProvider the supplier of context before calling any non-blocking
 	 * operation on underlying delegate
 	 */
-	McpSyncClient(McpAsyncClient delegate, Supplier<McpTransportContext> contextProvider) {
+	public McpSyncClient(McpAsyncClient delegate, Supplier<McpTransportContext> contextProvider) {
 		Assert.notNull(delegate, "The delegate can not be null");
 		Assert.notNull(contextProvider, "The contextProvider can not be null");
 		this.delegate = delegate;

@@ -46,7 +46,7 @@ import reactor.core.scheduler.Schedulers;
  * @see McpSchema.Implementation
  * @see McpSchema.ClientCapabilities
  */
-class McpClientFeatures {
+public class McpClientFeatures {
 
 	/**
 	 * Asynchronous client features specification providing the capabilities and request
@@ -64,7 +64,7 @@ class McpClientFeatures {
 	 * @param elicitationHandler the elicitation handler.
 	 * @param enableCallToolSchemaCaching whether to enable call tool schema caching.
 	 */
-	record Async(McpSchema.Implementation clientInfo, McpSchema.ClientCapabilities clientCapabilities,
+	public record Async(McpSchema.Implementation clientInfo, McpSchema.ClientCapabilities clientCapabilities,
 			Map<String, McpSchema.Root> roots, List<Function<List<McpSchema.Tool>, Mono<Void>>> toolsChangeConsumers,
 			List<Function<List<McpSchema.Resource>, Mono<Void>>> resourcesChangeConsumers,
 			List<Function<List<McpSchema.ResourceContents>, Mono<Void>>> resourcesUpdateConsumers,
