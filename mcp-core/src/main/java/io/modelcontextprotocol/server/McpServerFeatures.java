@@ -354,7 +354,8 @@ public class McpServerFeatures {
 	public record AsyncResourceSpecification(McpSchema.Resource resource,
 			BiFunction<McpAsyncServerExchange, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> readHandler) {
 
-		public static AsyncResourceSpecification fromSync(SyncResourceSpecification resource, boolean immediateExecution) {
+		public static AsyncResourceSpecification fromSync(SyncResourceSpecification resource,
+				boolean immediateExecution) {
 			// FIXME: This is temporary, proper validation should be implemented
 			if (resource == null) {
 				return null;
