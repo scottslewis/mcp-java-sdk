@@ -94,7 +94,7 @@ public class McpStatelessServerFeatures {
 		 * @return a specification which is protected from blocking calls specified by the
 		 * user.
 		 */
-		static Async fromSync(Sync syncSpec, boolean immediateExecution) {
+		public static Async fromSync(Sync syncSpec, boolean immediateExecution) {
 			List<McpStatelessServerFeatures.AsyncToolSpecification> tools = new ArrayList<>();
 			for (var tool : syncSpec.tools()) {
 				tools.add(AsyncToolSpecification.fromSync(tool, immediateExecution));
@@ -136,7 +136,7 @@ public class McpStatelessServerFeatures {
 	 * @param prompts The map of prompt specifications
 	 * @param instructions The server instructions text
 	 */
-	record Sync(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
+	public record Sync(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
 			List<McpStatelessServerFeatures.SyncToolSpecification> tools,
 			Map<String, McpStatelessServerFeatures.SyncResourceSpecification> resources,
 			Map<String, McpStatelessServerFeatures.SyncResourceTemplateSpecification> resourceTemplates,
@@ -154,7 +154,7 @@ public class McpStatelessServerFeatures {
 		 * @param prompts The map of prompt specifications
 		 * @param instructions The server instructions text
 		 */
-		Sync(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
+		public Sync(McpSchema.Implementation serverInfo, McpSchema.ServerCapabilities serverCapabilities,
 				List<McpStatelessServerFeatures.SyncToolSpecification> tools,
 				Map<String, McpStatelessServerFeatures.SyncResourceSpecification> resources,
 				Map<String, McpStatelessServerFeatures.SyncResourceTemplateSpecification> resourceTemplates,
@@ -199,11 +199,11 @@ public class McpStatelessServerFeatures {
 	public record AsyncToolSpecification(McpSchema.Tool tool,
 			BiFunction<McpTransportContext, CallToolRequest, Mono<McpSchema.CallToolResult>> callHandler) {
 
-		static AsyncToolSpecification fromSync(SyncToolSpecification syncToolSpec) {
+		public static AsyncToolSpecification fromSync(SyncToolSpecification syncToolSpec) {
 			return fromSync(syncToolSpec, false);
 		}
 
-		static AsyncToolSpecification fromSync(SyncToolSpecification syncToolSpec, boolean immediate) {
+		public static AsyncToolSpecification fromSync(SyncToolSpecification syncToolSpec, boolean immediate) {
 
 			// FIXME: This is temporary, proper validation should be implemented
 			if (syncToolSpec == null) {
@@ -291,7 +291,7 @@ public class McpStatelessServerFeatures {
 	public record AsyncResourceSpecification(McpSchema.Resource resource,
 			BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> readHandler) {
 
-		static AsyncResourceSpecification fromSync(SyncResourceSpecification resource, boolean immediateExecution) {
+		public static AsyncResourceSpecification fromSync(SyncResourceSpecification resource, boolean immediateExecution) {
 			// FIXME: This is temporary, proper validation should be implemented
 			if (resource == null) {
 				return null;
@@ -330,7 +330,7 @@ public class McpStatelessServerFeatures {
 	public record AsyncResourceTemplateSpecification(McpSchema.ResourceTemplate resourceTemplate,
 			BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> readHandler) {
 
-		static AsyncResourceTemplateSpecification fromSync(SyncResourceTemplateSpecification resource,
+		public static AsyncResourceTemplateSpecification fromSync(SyncResourceTemplateSpecification resource,
 				boolean immediateExecution) {
 			// FIXME: This is temporary, proper validation should be implemented
 			if (resource == null) {
@@ -362,7 +362,7 @@ public class McpStatelessServerFeatures {
 	public record AsyncPromptSpecification(McpSchema.Prompt prompt,
 			BiFunction<McpTransportContext, McpSchema.GetPromptRequest, Mono<McpSchema.GetPromptResult>> promptHandler) {
 
-		static AsyncPromptSpecification fromSync(SyncPromptSpecification prompt, boolean immediateExecution) {
+		public static AsyncPromptSpecification fromSync(SyncPromptSpecification prompt, boolean immediateExecution) {
 			// FIXME: This is temporary, proper validation should be implemented
 			if (prompt == null) {
 				return null;
@@ -400,7 +400,7 @@ public class McpStatelessServerFeatures {
 		 * @return an asynchronous wrapper of the provided sync specification, or
 		 * {@code null} if input is null
 		 */
-		static AsyncCompletionSpecification fromSync(SyncCompletionSpecification completion,
+		public static AsyncCompletionSpecification fromSync(SyncCompletionSpecification completion,
 				boolean immediateExecution) {
 			if (completion == null) {
 				return null;
