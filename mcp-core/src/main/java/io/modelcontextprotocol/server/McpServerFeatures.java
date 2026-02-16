@@ -354,7 +354,7 @@ public class McpServerFeatures {
 	public record AsyncResourceSpecification(McpSchema.Resource resource,
 			BiFunction<McpAsyncServerExchange, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> readHandler) {
 
-		static AsyncResourceSpecification fromSync(SyncResourceSpecification resource, boolean immediateExecution) {
+		public static AsyncResourceSpecification fromSync(SyncResourceSpecification resource, boolean immediateExecution) {
 			// FIXME: This is temporary, proper validation should be implemented
 			if (resource == null) {
 				return null;
@@ -394,7 +394,7 @@ public class McpServerFeatures {
 	public record AsyncResourceTemplateSpecification(McpSchema.ResourceTemplate resourceTemplate,
 			BiFunction<McpAsyncServerExchange, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> readHandler) {
 
-		static AsyncResourceTemplateSpecification fromSync(SyncResourceTemplateSpecification resource,
+		public static AsyncResourceTemplateSpecification fromSync(SyncResourceTemplateSpecification resource,
 				boolean immediateExecution) {
 			// FIXME: This is temporary, proper validation should be implemented
 			if (resource == null) {
@@ -442,7 +442,7 @@ public class McpServerFeatures {
 	public record AsyncPromptSpecification(McpSchema.Prompt prompt,
 			BiFunction<McpAsyncServerExchange, McpSchema.GetPromptRequest, Mono<McpSchema.GetPromptResult>> promptHandler) {
 
-		static AsyncPromptSpecification fromSync(SyncPromptSpecification prompt, boolean immediateExecution) {
+		public static AsyncPromptSpecification fromSync(SyncPromptSpecification prompt, boolean immediateExecution) {
 			// FIXME: This is temporary, proper validation should be implemented
 			if (prompt == null) {
 				return null;
@@ -482,7 +482,7 @@ public class McpServerFeatures {
 		 * @return an asynchronous wrapper of the provided sync specification, or
 		 * {@code null} if input is null
 		 */
-		static AsyncCompletionSpecification fromSync(SyncCompletionSpecification completion,
+		public static AsyncCompletionSpecification fromSync(SyncCompletionSpecification completion,
 				boolean immediateExecution) {
 			if (completion == null) {
 				return null;
