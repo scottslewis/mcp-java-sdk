@@ -91,11 +91,11 @@ public class McpAsyncServer {
 
 	private static final Logger logger = LoggerFactory.getLogger(McpAsyncServer.class);
 
-	private final McpServerTransportProviderBase mcpTransportProvider;
+	protected final McpServerTransportProviderBase mcpTransportProvider;
 
-	private final McpJsonMapper jsonMapper;
+	protected final McpJsonMapper jsonMapper;
 
-	private final JsonSchemaValidator jsonSchemaValidator;
+	protected final JsonSchemaValidator jsonSchemaValidator;
 
 	private final McpSchema.ServerCapabilities serverCapabilities;
 

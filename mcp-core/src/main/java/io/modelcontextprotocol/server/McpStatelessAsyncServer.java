@@ -51,9 +51,9 @@ public class McpStatelessAsyncServer {
 
 	private static final Logger logger = LoggerFactory.getLogger(McpStatelessAsyncServer.class);
 
-	private final McpStatelessServerTransport mcpTransportProvider;
+	protected final McpStatelessServerTransport mcpTransportProvider;
 
-	private final McpJsonMapper jsonMapper;
+	protected final McpJsonMapper jsonMapper;
 
 	private final McpSchema.ServerCapabilities serverCapabilities;
 
