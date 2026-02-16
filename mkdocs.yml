@@ -92,6 +92,8 @@ extra:
     default: 
       - dev
       - latest
+      - prod
+      - release
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/modelcontextprotocol/java-sdk
