@@ -97,29 +97,29 @@ public class McpAsyncServer {
 
 	protected final JsonSchemaValidator jsonSchemaValidator;
 
-	private final McpSchema.ServerCapabilities serverCapabilities;
+	protected final McpSchema.ServerCapabilities serverCapabilities;
 
-	private final McpSchema.Implementation serverInfo;
+	protected final McpSchema.Implementation serverInfo;
 
-	private final String instructions;
+	protected final String instructions;
 
 	protected final CopyOnWriteArrayList<McpServerFeatures.AsyncToolSpecification> tools = new CopyOnWriteArrayList<>();
 
-	private final ConcurrentHashMap<String, McpServerFeatures.AsyncResourceSpecification> resources = new ConcurrentHashMap<>();
+	protected final ConcurrentHashMap<String, McpServerFeatures.AsyncResourceSpecification> resources = new ConcurrentHashMap<>();
 
-	private final ConcurrentHashMap<String, McpServerFeatures.AsyncResourceTemplateSpecification> resourceTemplates = new ConcurrentHashMap<>();
+	protected final ConcurrentHashMap<String, McpServerFeatures.AsyncResourceTemplateSpecification> resourceTemplates = new ConcurrentHashMap<>();
 
-	private final ConcurrentHashMap<String, McpServerFeatures.AsyncPromptSpecification> prompts = new ConcurrentHashMap<>();
+	protected final ConcurrentHashMap<String, McpServerFeatures.AsyncPromptSpecification> prompts = new ConcurrentHashMap<>();
 
 	// FIXME: this field is deprecated and should be remvoed together with the
 	// broadcasting loggingNotification.
 	private LoggingLevel minLoggingLevel = LoggingLevel.DEBUG;
 
-	private final ConcurrentHashMap<McpSchema.CompleteReference, McpServerFeatures.AsyncCompletionSpecification> completions = new ConcurrentHashMap<>();
+	protected final ConcurrentHashMap<McpSchema.CompleteReference, McpServerFeatures.AsyncCompletionSpecification> completions = new ConcurrentHashMap<>();
 
-	private List<String> protocolVersions;
+	protected List<String> protocolVersions;
 
-	private McpUriTemplateManagerFactory uriTemplateManagerFactory = new DefaultMcpUriTemplateManagerFactory();
+	protected McpUriTemplateManagerFactory uriTemplateManagerFactory = new DefaultMcpUriTemplateManagerFactory();
 
 	/**
 	 * Create a new McpAsyncServer with the given transport provider and capabilities.
@@ -178,7 +178,7 @@ public class McpAsyncServer {
 				this::asyncInitializeRequestHandler, requestHandlers, notificationHandlers));
 	}
 
-	private Map<String, McpNotificationHandler> prepareNotificationHandlers(McpServerFeatures.Async features) {
+	protected Map<String, McpNotificationHandler> prepareNotificationHandlers(McpServerFeatures.Async features) {
 		Map<String, McpNotificationHandler> notificationHandlers = new HashMap<>();
 
 		notificationHandlers.put(McpSchema.METHOD_NOTIFICATION_INITIALIZED, (exchange, params) -> Mono.empty());
@@ -196,7 +196,7 @@ public class McpAsyncServer {
 		return notificationHandlers;
 	}
 
-	private Map<String, McpRequestHandler<?>> prepareRequestHandlers() {
+	protected Map<String, McpRequestHandler<?>> prepareRequestHandlers() {
 		Map<String, McpRequestHandler<?>> requestHandlers = new HashMap<>();
 
 		// Initialize request handlers for standard MCP methods

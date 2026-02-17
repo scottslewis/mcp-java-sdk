@@ -54,9 +54,9 @@ public class McpSyncServer {
 	/**
 	 * The async server to wrap.
 	 */
-	private final McpAsyncServer asyncServer;
+	protected final McpAsyncServer asyncServer;
 
-	private final boolean immediateExecution;
+	protected final boolean immediateExecution;
 
 	/**
 	 * Creates a new synchronous server that wraps the provided async server.
