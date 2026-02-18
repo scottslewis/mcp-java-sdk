@@ -44,7 +44,7 @@ jobs:
             ALIAS="latest"
           fi
           mike deploy --push --update-aliases "${PROJECT_VERSION}" "${ALIAS}"
-          mike set-default "${ALIAS}" --push
+          mike set-default latest --push
 
       - name: Deploy versioned docs (release)
         if: github.event_name == 'release'
