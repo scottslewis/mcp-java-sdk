@@ -120,7 +120,7 @@ Add the BOM to your project:
             <dependency>
                 <groupId>io.modelcontextprotocol.sdk</groupId>
                 <artifactId>mcp-bom</artifactId>
-                <version>0.17.2</version>
+                <version>1.0.0-RC1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -132,7 +132,7 @@ Add the BOM to your project:
 
     ```groovy
     dependencies {
-        implementation platform("io.modelcontextprotocol.sdk:mcp-bom:0.17.2")
+        implementation platform("io.modelcontextprotocol.sdk:mcp-bom:latest")
         //...
     }
     ```

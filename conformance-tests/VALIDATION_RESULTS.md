@@ -65,7 +65,7 @@ cd conformance-tests/client-jdk-http-client
 # Run all scenarios
 for scenario in initialize tools_call elicitation-sep1034-client-defaults sse-retry; do
   npx @modelcontextprotocol/conformance client \
-    --command "java -jar target/client-jdk-http-client-0.18.0-SNAPSHOT.jar" \
+    --command "java -jar target/client-jdk-http-client-1.0.0-SNAPSHOT.jar" \
     --scenario $scenario
 done
 ```
