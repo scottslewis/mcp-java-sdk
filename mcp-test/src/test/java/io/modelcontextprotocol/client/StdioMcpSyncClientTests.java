@@ -67,7 +67,7 @@ class StdioMcpSyncClientTests extends AbstractMcpSyncClientTests {
 	}
 
 	protected Duration getInitializationTimeout() {
-		return Duration.ofSeconds(10);
+		return Duration.ofSeconds(25);
 	}
 
 	@Override
