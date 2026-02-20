@@ -32,6 +32,10 @@ public abstract class TypeRef<T> {
 		this.type = ((ParameterizedType) superClass).getActualTypeArguments()[0];
 	}
 
+	protected TypeRef(Type type) {
+		this.type = type;
+	}
+
 	/**
 	 * Returns the captured type information.
 	 * @return the Type representing the actual type argument captured by this TypeRef
