@@ -33,6 +33,7 @@ import io.modelcontextprotocol.spec.McpSchema.Tool;
 import io.modelcontextprotocol.spec.McpServerSession;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import io.modelcontextprotocol.spec.McpServerTransportProviderBase;
+import io.modelcontextprotocol.spec.McpStreamableServerSession;
 import io.modelcontextprotocol.spec.McpStreamableServerTransportProvider;
 import io.modelcontextprotocol.util.Assert;
 import io.modelcontextprotocol.util.DefaultMcpUriTemplateManagerFactory;
@@ -120,6 +121,32 @@ public class McpAsyncServer {
 	protected List<String> protocolVersions;
 
 	protected McpUriTemplateManagerFactory uriTemplateManagerFactory = new DefaultMcpUriTemplateManagerFactory();
+
+	public McpAsyncServer(McpServerTransportProvider transportProvider, McpJsonMapper jsonMapper,
+			JsonSchemaValidator jsonSchemaValidator, McpServerFeatures.Async features,
+			McpUriTemplateManagerFactory uriTemplateManagerFactory) {
+		this.mcpTransportProvider = transportProvider;
+		this.jsonMapper = jsonMapper;
+		this.serverInfo = features.serverInfo();
+		this.serverCapabilities = features.serverCapabilities().mutate().logging().build();
+		this.instructions = features.instructions();
+		this.tools.addAll(withStructuredOutputHandling(jsonSchemaValidator, features.tools()));
+		this.resources.putAll(features.resources());
+		this.resourceTemplates.putAll(features.resourceTemplates());
+		this.prompts.putAll(features.prompts());
+		this.completions.putAll(features.completions());
+		this.uriTemplateManagerFactory = uriTemplateManagerFactory;
+		this.jsonSchemaValidator = jsonSchemaValidator;
+		this.protocolVersions = mcpTransportProvider.protocolVersions();
+	}
+
+	protected void startServer(McpServerSession.Factory factory) {
+		((McpServerTransportProvider) this.mcpTransportProvider).setSessionFactory(factory);
+	}
+
+	protected void startStreamingServer(McpStreamableServerSession.Factory factory) {
+		((McpStreamableServerTransportProvider) this.mcpTransportProvider).setSessionFactory(factory);
+	}
 
 	/**
 	 * Create a new McpAsyncServer with the given transport provider and capabilities.
@@ -238,7 +265,7 @@ public class McpAsyncServer {
 	// ---------------------------------------
 	// Lifecycle Management
 	// ---------------------------------------
-	private Mono<McpSchema.InitializeResult> asyncInitializeRequestHandler(
+	protected Mono<McpSchema.InitializeResult> asyncInitializeRequestHandler(
 			McpSchema.InitializeRequest initializeRequest) {
 		return Mono.defer(() -> {
 			logger.info("Client initialize request - Protocol: {}, Capabilities: {}, Info: {}",
