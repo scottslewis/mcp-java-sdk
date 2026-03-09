@@ -122,7 +122,7 @@ public class McpAsyncServer {
 
 	protected McpUriTemplateManagerFactory uriTemplateManagerFactory = new DefaultMcpUriTemplateManagerFactory();
 
-	public McpAsyncServer(McpServerTransportProvider transportProvider, McpJsonMapper jsonMapper,
+	protected McpAsyncServer(McpServerTransportProvider transportProvider, McpJsonMapper jsonMapper,
 			JsonSchemaValidator jsonSchemaValidator, McpServerFeatures.Async features,
 			McpUriTemplateManagerFactory uriTemplateManagerFactory) {
 		this.mcpTransportProvider = transportProvider;
@@ -140,14 +140,6 @@ public class McpAsyncServer {
 		this.protocolVersions = mcpTransportProvider.protocolVersions();
 	}
 
-	protected void startServer(McpServerSession.Factory factory) {
-		((McpServerTransportProvider) this.mcpTransportProvider).setSessionFactory(factory);
-	}
-
-	protected void startStreamingServer(McpStreamableServerSession.Factory factory) {
-		((McpStreamableServerTransportProvider) this.mcpTransportProvider).setSessionFactory(factory);
-	}
-
 	/**
 	 * Create a new McpAsyncServer with the given transport provider and capabilities.
 	 * @param mcpTransportProvider The transport layer implementation for MCP
@@ -155,7 +147,7 @@ public class McpAsyncServer {
 	 * @param features The MCP server supported features.
 	 * @param jsonMapper The JsonMapper to use for JSON serialization/deserialization
 	 */
-	public McpAsyncServer(McpServerTransportProvider mcpTransportProvider, McpJsonMapper jsonMapper,
+	protected McpAsyncServer(McpServerTransportProvider mcpTransportProvider, McpJsonMapper jsonMapper,
 			McpServerFeatures.Async features, Duration requestTimeout,
 			McpUriTemplateManagerFactory uriTemplateManagerFactory, JsonSchemaValidator jsonSchemaValidator) {
 		this.mcpTransportProvider = mcpTransportProvider;
@@ -180,7 +172,7 @@ public class McpAsyncServer {
 				requestTimeout, transport, this::asyncInitializeRequestHandler, requestHandlers, notificationHandlers));
 	}
 
-	public McpAsyncServer(McpStreamableServerTransportProvider mcpTransportProvider, McpJsonMapper jsonMapper,
+	protected McpAsyncServer(McpStreamableServerTransportProvider mcpTransportProvider, McpJsonMapper jsonMapper,
 			McpServerFeatures.Async features, Duration requestTimeout,
 			McpUriTemplateManagerFactory uriTemplateManagerFactory, JsonSchemaValidator jsonSchemaValidator) {
 		this.mcpTransportProvider = mcpTransportProvider;

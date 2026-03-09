@@ -182,7 +182,7 @@ public class McpAsyncClient {
 	 * @param features the MCP Client supported features. responses against output
 	 * schemas.
 	 */
-	public McpAsyncClient(McpClientTransport transport, Duration requestTimeout, Duration initializationTimeout,
+	protected McpAsyncClient(McpClientTransport transport, Duration requestTimeout, Duration initializationTimeout,
 			JsonSchemaValidator jsonSchemaValidator, McpClientFeatures.Async features) {
 
 		Assert.notNull(transport, "Transport must not be null");
