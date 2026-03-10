@@ -50,7 +50,7 @@ public class StdioServerTransportProvider implements McpServerTransportProvider 
 
 	private final OutputStream outputStream;
 
-	private McpServerSession session;
+	protected McpServerSession session;
 
 	private final AtomicBoolean isClosing = new AtomicBoolean(false);
 
@@ -115,7 +115,7 @@ public class StdioServerTransportProvider implements McpServerTransportProvider 
 	/**
 	 * Implementation of McpServerTransport for the stdio session.
 	 */
-	private class StdioMcpSessionTransport implements McpServerTransport {
+	protected class StdioMcpSessionTransport implements McpServerTransport {
 
 		private final Sinks.Many<JSONRPCMessage> inboundSink;
 
@@ -176,7 +176,7 @@ public class StdioServerTransportProvider implements McpServerTransportProvider 
 			logger.debug("Session transport closed");
 		}
 
-		private void initProcessing() {
+		protected void initProcessing() {
 			handleIncomingMessages();
 			startInboundProcessing();
 			startOutboundProcessing();
